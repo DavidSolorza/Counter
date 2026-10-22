@@ -1,6 +1,6 @@
 """
 backend/app.py
-Punto de entrada de la aplicación Flask en backend/.
+Punto de entrada de la plataforma Counter en backend/.
 Gobernanza: Límite estricto < 150 líneas.
 """
 from pathlib import Path
@@ -16,7 +16,7 @@ def create_app() -> Flask:
     app = Flask(__name__)
     CORS(app, resources={r"/*": {"origins": "*"}})
 
-    # Inicializar esquemas DDL en SQLite
+    # Inicializar DDL en SQLite
     db.initialize_schema()
 
     # Registro de Blueprints
@@ -24,20 +24,9 @@ def create_app() -> Flask:
     app.register_blueprint(telemetry_bp)
 
     @app.route("/", methods=["GET"])
-    def index() -> tuple[Response, int]:
-        return jsonify({
-            "service": "WolfAnalytics Enterprise API",
-            "version": "2.1.0",
-            "status": "online",
-            "endpoints": {
-                "handshake": "/api/v1/verify",
-                "telemetry": "/api/v1/telemetry",
-                "stats": "/api/v1/stats/<site_key>",
-                "events": "/api/v1/events/<site_key>",
-                "dashboard": "/dashboard"
-            },
-            "sdk_url": "/sdk/tracker.js"
-        }), 200
+    def index() -> Response:
+        dash_file = Path(__file__).resolve().parent / "dashboard.html"
+        return send_file(dash_file, mimetype="text/html")
 
     @app.route("/dashboard", methods=["GET"])
     def serve_dashboard() -> Response:
@@ -46,9 +35,16 @@ def create_app() -> Flask:
 
     @app.route("/sdk/tracker.js", methods=["GET"])
     @app.route("/tracker.js", methods=["GET"])
+    @app.route("/sdk/counter.js", methods=["GET"])
+    @app.route("/counter.js", methods=["GET"])
     def serve_sdk() -> Response:
         sdk_file = config.SDK_DIR / "tracker.js"
         return send_file(sdk_file, mimetype="application/javascript")
+
+    @app.route("/download/counter.js", methods=["GET"])
+    def download_sdk() -> Response:
+        sdk_file = config.SDK_DIR / "tracker.js"
+        return send_file(sdk_file, as_attachment=True, download_name="counter.js")
 
     @app.route("/inyeccion.js", methods=["GET"])
     def serve_microfooter() -> Response:
@@ -64,6 +60,6 @@ def create_app() -> Flask:
 
 if __name__ == "__main__":
     app_instance = create_app()
-    print(f"[WolfAnalytics] Dashboard en vivo: http://{config.HOST}:{config.PORT}/dashboard")
-    print(f"[WolfAnalytics] SDK empresarial: http://{config.HOST}:{config.PORT}/sdk/tracker.js")
+    print(f"[Counter] Portal oficial activo en http://{config.HOST}:{config.PORT}/")
+    print(f"[Counter] SDK descargable en: http://{config.HOST}:{config.PORT}/download/counter.js")
     app_instance.run(host=config.HOST, port=config.PORT, debug=config.DEBUG)

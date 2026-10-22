@@ -1,6 +1,6 @@
 """
 backend/controllers/telemetry_controller.py
-Controlador de ingesta unificada de telemetría y enriquecimiento.
+Controlador de ingesta unificada de telemetría, rate limiting y enriquecimiento.
 Gobernanza: Límite estricto < 150 líneas.
 """
 import json
@@ -9,6 +9,7 @@ from database.repositories.site_repository import SiteRepository
 from database.repositories.event_repository import EventRepository
 from backend.enrichment.user_agent_parser import ua_parser
 from backend.enrichment.geo_ip_enricher import geo_enricher
+from backend.core.rate_limiter import rate_limiter
 
 telemetry_bp = Blueprint("telemetry", __name__, url_prefix="/api/v1")
 _site_repo = SiteRepository()
@@ -28,6 +29,12 @@ def _get_payload() -> dict:
 
 @telemetry_bp.route("/telemetry", methods=["POST"])
 def receive_telemetry() -> tuple[Response, int]:
+    client_ip = geo_enricher.extract_ip(dict(request.headers), request.remote_addr)
+
+    # Protección de seguridad contra inundación (Rate Limiting)
+    if not rate_limiter.is_allowed(client_ip):
+        return jsonify({"success": False, "error": "Límite de tasa excedido. Intenta más tarde."}), 429
+
     payload = _get_payload()
     site_key = payload.get("site_key")
     raw_events = payload.get("events")
@@ -38,15 +45,12 @@ def receive_telemetry() -> tuple[Response, int]:
     if not raw_events or not isinstance(raw_events, list):
         return jsonify({"success": False, "error": "Lista de eventos vacía o inválida."}), 400
 
-    # Enriquecimiento ultrarrápido con User-Agent y contexto de red
     ua_meta = ua_parser.parse(request.headers.get("User-Agent", ""))
-    client_ip = geo_enricher.extract_ip(dict(request.headers), request.remote_addr)
     geo_meta = geo_enricher.enrich(client_ip)
 
     for ev in raw_events:
         if "event_data" not in ev or not isinstance(ev["event_data"], dict):
             ev["event_data"] = {}
-        # Inyectar metadatos en event_data
         ev["event_data"]["_client"] = ua_meta
         ev["event_data"]["_network"] = geo_meta
 
