@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>WolfAnalytics - Live Monitoring Dashboard</title>
+    <style>
+        :root { --bg: #09090b; --card: #18181b; --accent: #22c55e; --text: #fafafa; --muted: #a1a1aa; --border: rgba(255,255,255,0.1); }
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body { background: var(--bg); color: var(--text); font-family: system-ui, sans-serif; padding: 24px; }
+        .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
+        h1 { font-size: 20px; }
+        .pulse { display: inline-flex; align-items: center; gap: 6px; font-size: 12px; color: var(--accent); }
+        .dot { width: 8px; height: 8px; background: var(--accent); border-radius: 50%; box-shadow: 0 0 8px var(--accent); animation: pulse 1.5s infinite; }
+        @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.4; } }
+        .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 14px; margin-bottom: 20px; }
+        .card { background: var(--card); border: 1px solid var(--border); border-radius: 10px; padding: 16px; }
+        .card .title { font-size: 11px; color: var(--muted); text-transform: uppercase; }
+        .card .val { font-size: 24px; font-weight: 700; margin-top: 4px; }
+        table { width: 100%; border-collapse: collapse; background: var(--card); border: 1px solid var(--border); border-radius: 10px; overflow: hidden; font-size: 12px; }
+        th, td { padding: 10px 14px; text-align: left; border-bottom: 1px solid var(--border); }
+        th { background: #27272a; color: var(--muted); font-size: 11px; text-transform: uppercase; }
+        .badge { padding: 3px 8px; border-radius: 6px; font-size: 11px; font-weight: 600; display: inline-block; }
+        .badge-click { background: #1e3a5f; color: #60a5fa; }
+        .badge-error { background: #450a0a; color: #f87171; }
+        .badge-vitals { background: #064e3b; color: #34d399; }
+        .badge-other { background: #27272a; color: #d4d4d8; }
+        pre.json-view { font-family: monospace; font-size: 11px; color: #a7f3d0; max-width: 380px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>🐺 WolfAnalytics Live Monitor</h1>
+        <div class="pulse"><span class="dot"></span> Transmisión en tiempo real</div>
+    </div>
+    <div class="stats-grid">
+        <div class="card"><div class="title">Eventos en Base de Datos</div><div class="val" id="total-count">...</div></div>
+        <div class="card"><div class="title">Site Key Activa</div><div class="val" style="font-size: 16px; color: #38bdf8;">wk_test_12345</div></div>
+        <div class="card"><div class="title">Intervalo de Sincronización</div><div class="val" style="font-size: 16px;">Cada 4s / Inmediato</div></div>
+    </div>
+    <table>
+        <thead>
+            <tr><th>Hora</th><th>Tipo</th><th>Página URL</th><th>Navegador / SO</th><th>IP Origen</th><th>Payload JSON</th></tr>
+        </thead>
+        <tbody id="events-body"><tr><td colspan="6" style="text-align: center; color: var(--muted);">Cargando eventos...</td></tr></tbody>
+    </table>
+    <script>
+        function updateDashboard() {
+            fetch('/api/v1/stats/wk_test_12345').then(r => r.json()).then(d => {
+                document.getElementById('total-count').textContent = d.total_events || 0;
+            }).catch(() => {});
+            fetch('/api/v1/events/wk_test_12345?limit=12').then(r => r.json()).then(d => {
+                const tbody = document.getElementById('events-body');
+                if (!d.events || d.events.length === 0) return;
+                tbody.innerHTML = d.events.map(ev => {
+                    const c = (ev.event_data && ev.event_data._client) || {};
+                    const net = (ev.event_data && ev.event_data._network) || {};
+                    const typeClass = ev.event_type.includes('error') ? 'badge-error' : (ev.event_type.includes('vital') ? 'badge-vitals' : (ev.event_type === 'click' ? 'badge-click' : 'badge-other'));
+                    const cleanData = Object.assign({}, ev.event_data);
+                    delete cleanData._client; delete cleanData._network;
+                    return `<tr>
+                        <td style="color: var(--muted);">${ev.created_at ? ev.created_at.split(' ')[1] : ''}</td>
+                        <td><span class="badge ${typeClass}">${ev.event_type}</span></td>
+                        <td style="max-width: 180px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${ev.page_url}</td>
+                        <td>${c.browser || 'Unknown'} / ${c.os || 'OS'}</td>
+                        <td>${net.client_ip || '127.0.0.1'}</td>
+                        <td><pre class="json-view">${JSON.stringify(cleanData)}</pre></td>
+                    </tr>`;
+                }).join('');
+            }).catch(() => {});
+        }
+        setInterval(updateDashboard, 2000);
+        updateDashboard();
+    </script>
+</body>
+</html>

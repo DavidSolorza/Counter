@@ -36,3 +36,6 @@ venv.bak/
 .idea/
 .DS_Store
 Thumbs.db
+
+# Subproyectos de prueba locales excluidos del repo principal
+PruebaCouter/

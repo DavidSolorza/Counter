@@ -1,5 +1,5 @@
 /**
- * WolfAnalytics Enterprise SDK (v2.0.0 - Standalone Unified Bundle)
+ * WolfAnalytics Enterprise SDK (v2.1.0 - Realtime Interval + Debounce + Debug)
  * Gobernanza: Límite estricto < 150 líneas.
  */
 (function () {
@@ -14,9 +14,14 @@
         return;
     }
 
+    const isDebug = tag.getAttribute('data-debug') === 'true';
     const API_BASE = tag.getAttribute('data-api-base') || 'http://127.0.0.1:5000/api/v1';
 
-    // 1. Handshake de activación
+    function debugLog(label, data) {
+        if (isDebug) console.log("%c[WolfAnalytics] " + label, "color: #22c55e; font-weight: bold;", data || "");
+    }
+
+    // 1. Handshake inicial
     fetch(API_BASE + '/verify', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -28,35 +33,56 @@
             console.warn("WolfAnalytics: Licencia inactiva o bloqueada.");
             return;
         }
-        console.info("WolfAnalytics Enterprise activo para:", res.domain);
+        debugLog("Desbloqueado para dominio:", res.domain);
         boot(key, API_BASE);
     })
     .catch(function(err) {
-        console.error("WolfAnalytics: Error al conectar con el servidor de licencias.", err);
+        console.error("WolfAnalytics: Error conectando con el servidor.", err);
     });
 
     function boot(siteKey, apiBase) {
         const buffer = [];
-        let startTime = Date.now();
-        let dwellMs = 0;
-        let isVis = document.visibilityState === 'visible';
+        let startTime = Date.now(), dwellMs = 0, isVis = document.visibilityState === 'visible';
+        let debounceTimer = null;
 
-        function emit(type, data) {
+        function emit(type, data, immediate) {
             buffer.push({ event_type: type, page_url: window.location.href, event_data: data || {} });
+            debugLog("Capturado (" + type + "):", data);
+
+            if (immediate) {
+                flush();
+            } else {
+                clearTimeout(debounceTimer);
+                debounceTimer = setTimeout(flush, 1200);
+            }
         }
 
         function flush() {
             if (buffer.length === 0) return;
-            const payload = JSON.stringify({ site_key: siteKey, events: buffer.splice(0, buffer.length) });
+            const batch = buffer.splice(0, buffer.length);
+            const payload = JSON.stringify({ site_key: siteKey, events: batch });
             const endpoint = apiBase + '/telemetry';
-            if (navigator.sendBeacon) {
+            debugLog("Enviando lote al servidor (" + batch.length + " eventos)...");
+
+            if (navigator.sendBeacon && document.visibilityState === 'hidden') {
                 navigator.sendBeacon(endpoint, new Blob([payload], { type: 'text/plain' }));
             } else {
-                fetch(endpoint, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: payload, keepalive: true });
+                fetch(endpoint, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: payload,
+                    keepalive: true
+                })
+                .then(r => r.json())
+                .then(d => debugLog("Sincronización confirmada (stored: " + d.stored + ")"))
+                .catch(err => debugLog("Error en envío:", err));
             }
         }
 
-        // Visibilidad y Permanencia Real
+        // Temporizador periódico cada 4 segundos
+        setInterval(flush, 4000);
+
+        // Control de Visibilidad y Permanencia
         document.addEventListener('visibilitychange', function() {
             if (document.visibilityState === 'visible') { startTime = Date.now(); isVis = true; }
             else { if (isVis) dwellMs += Date.now() - startTime; isVis = false; flush(); }
@@ -64,11 +90,11 @@
         window.addEventListener('pagehide', flush);
         window.addEventListener('beforeunload', function() {
             const activeTime = isVis ? dwellMs + (Date.now() - startTime) : dwellMs;
-            emit('page_dwell', { active_dwell_ms: activeTime });
+            buffer.push({ event_type: 'page_dwell', page_url: window.location.href, event_data: { active_dwell_ms: activeTime } });
             flush();
         });
 
-        // Métricas de Performance Web Vitals
+        // Métricas de Rendimiento (Web Vitals)
         window.addEventListener('load', function() {
             setTimeout(function() {
                 const nav = performance.getEntriesByType ? performance.getEntriesByType('navigation')[0] : null;
@@ -76,38 +102,26 @@
                     ttfb_ms: nav ? Math.round(nav.responseStart - nav.requestStart) : 0,
                     load_time_ms: nav ? Math.round(nav.loadEventEnd - nav.startTime) : 0,
                     dom_ready_ms: nav ? Math.round(nav.domInteractive - nav.startTime) : 0
-                });
-                flush();
+                }, false);
             }, 100);
         });
 
-        // Centinela de Errores Frontend
+        // Centinela de Errores Frontend (Envío Inmediato)
         window.addEventListener('error', function(e) {
-            emit('client_error', { message: e.message, file: e.filename, line: e.lineno, stack: e.error ? e.error.stack : null });
-            flush();
+            emit('client_error', { message: e.message, file: e.filename, line: e.lineno, stack: e.error ? e.error.stack : null }, true);
         });
         window.addEventListener('unhandledrejection', function(e) {
-            emit('promise_rejection', { reason: String(e.reason) });
-            flush();
+            emit('promise_rejection', { reason: String(e.reason) }, true);
         });
 
-        // Captura de clics en DOM
+        // Intercepción de clics en el DOM
         document.addEventListener('click', function(e) {
             const el = e.target;
             const id = el.tagName + (el.id ? '#' + el.id : '') + (el.className ? '.' + String(el.className).split(' ')[0] : '');
             emit('click', { element: id, text: (el.innerText || '').slice(0, 40).trim(), dataset: Object.assign({}, el.dataset) });
         }, true);
 
-        // API Pública
-        window.WolfAnalytics = {
-            track: function(t, d) { emit(t, d); },
-            flush: flush
-        };
-
-        // Actualizar badge visual si existe
-        fetch(apiBase + '/stats/' + encodeURIComponent(siteKey))
-            .then(r => r.json())
-            .then(d => { const b = document.getElementById('wc-number'); if (b && typeof d.total_events === 'number') b.textContent = d.total_events; })
-            .catch(function() {});
+        // API Global
+        window.WolfAnalytics = { track: (t, d, imm) => emit(t, d, imm), flush: flush };
     }
 })();
