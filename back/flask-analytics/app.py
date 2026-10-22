@@ -17,10 +17,12 @@ try:
     from database.connection import db
     from core.config import config
     from controllers.telemetry_controller import telemetry_bp
+    from controllers.analytics_controller import analytics_bp
 except ImportError:
     from .database.connection import db
     from .core.config import config
     from .controllers.telemetry_controller import telemetry_bp
+    from .controllers.analytics_controller import analytics_bp
 
 
 def create_app() -> Flask:
@@ -30,8 +32,9 @@ def create_app() -> Flask:
     # Inicializar DDL en analytics.db
     db.initialize_schema()
 
-    # Registro de rutas de analítica
+    # Registro de rutas de telemetría y analítica avanzada
     app.register_blueprint(telemetry_bp)
+    app.register_blueprint(analytics_bp)
 
     @app.route("/", methods=["GET"])
     def root() -> tuple[Response, int]:
