@@ -3,90 +3,86 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>WolfAnalytics - Demo JSON Flexible</title>
+    <title>WolfAnalytics Enterprise - Demo Tripartita</title>
     <style>
         :root {
-            --bg-color: #09090b; --card-bg: #18181b; --accent: #22c55e;
-            --accent-glow: rgba(34, 197, 94, 0.35); --text-main: #fafafa;
-            --text-muted: #a1a1aa; --border: rgba(255, 255, 255, 0.1);
+            --bg: #09090b; --card: #18181b; --accent: #22c55e;
+            --text: #fafafa; --muted: #a1a1aa; --border: rgba(255, 255, 255, 0.1);
         }
         * { box-sizing: border-box; margin: 0; padding: 0; }
         body {
-            background: var(--bg-color); color: var(--text-main);
-            font-family: system-ui, sans-serif; min-height: 100vh;
-            display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 20px;
+            background: var(--bg); color: var(--text); font-family: system-ui, sans-serif;
+            min-height: 100vh; display: flex; flex-direction: column; align-items: center;
+            justify-content: center; padding: 20px;
         }
         .container {
-            width: 100%; max-width: 620px; background: var(--card-bg);
-            border: 1px solid var(--border); border-radius: 16px; padding: 28px;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.5); text-align: center;
+            width: 100%; max-width: 650px; background: var(--card); border: 1px solid var(--border);
+            border-radius: 16px; padding: 26px; box-shadow: 0 10px 30px rgba(0,0,0,0.5); text-align: center;
         }
         h1 { font-size: 22px; margin-bottom: 6px; }
-        p.sub { color: var(--text-muted); font-size: 13px; margin-bottom: 20px; }
-        .wolf-counter-badge {
+        p.sub { color: var(--muted); font-size: 13px; margin-bottom: 18px; }
+        .badge {
             display: inline-flex; align-items: center; gap: 8px; padding: 6px 14px;
-            background: linear-gradient(135deg, #18181b 0%, #27272a 100%);
-            border-radius: 9999px; font-size: 13px; border: 1px solid var(--border);
-            margin-bottom: 18px;
+            background: linear-gradient(135deg, #18181b, #27272a); border-radius: 9999px;
+            font-size: 13px; border: 1px solid var(--border); margin-bottom: 18px;
         }
         .dot { width: 8px; height: 8px; background: var(--accent); border-radius: 50%; box-shadow: 0 0 8px var(--accent); }
-        .actions { display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; margin-bottom: 18px; }
+        .actions { display: flex; gap: 8px; justify-content: center; flex-wrap: wrap; margin-bottom: 18px; }
         button {
-            background: #27272a; color: #fff; border: 1px solid var(--border);
-            border-radius: 8px; padding: 8px 14px; font-size: 12px; cursor: pointer; transition: 0.2s;
+            background: #27272a; color: #fff; border: 1px solid var(--border); border-radius: 8px;
+            padding: 8px 12px; font-size: 12px; cursor: pointer; transition: 0.2s;
         }
         button:hover { background: #3f3f46; transform: translateY(-1px); }
         button.primary { background: #15803d; border-color: #22c55e; }
+        button.danger { background: #991b1b; border-color: #ef4444; }
         .console {
             background: #000; border-radius: 8px; padding: 12px; font-family: monospace;
-            font-size: 11px; color: #4ade80; text-align: left; max-height: 140px; overflow-y: auto;
+            font-size: 11px; color: #4ade80; text-align: left; max-height: 160px; overflow-y: auto;
             border: 1px solid var(--border);
         }
     </style>
 </head>
 <body>
     <div class="container">
-        <h1>🐺 WolfAnalytics Engine (JSON Híbrido)</h1>
-        <p class="sub">Telemetría con columnas JSON variables en SQLite</p>
-        <div class="wolf-counter-badge">
+        <h1>🐺 WolfAnalytics Enterprise (Tripartita)</h1>
+        <p class="sub">sdk/ (Performance + Errores) ⬌ backend/ (Enriquecimiento) ⬌ database/</p>
+        <div class="badge">
             <span class="dot"></span>
             <span><strong id="wc-number">...</strong> eventos en DB</span>
             <span style="opacity: 0.3;">|</span>
             <a href="https://servidor.blog" target="_blank" style="color: #a1a1aa; text-decoration: none;">WolfStats</a>
         </div>
         <div class="actions">
-            <button id="btn-comprar" class="primary" onclick="trackCustomPurchase()">🛒 Comprar ($45 USD)</button>
-            <button id="btn-catalogo" onclick="trackCustomNav('catalogo')">📖 Catálogo</button>
-            <button id="btn-ver-db" onclick="fetchRecentEvents()">🔍 Ver DB (JSON)</button>
+            <button id="btn-compra" class="primary" onclick="testCustomEvent()">🛒 Compra ($45 USD)</button>
+            <button id="btn-error" class="danger" onclick="triggerClientError()">⚠️ Simular Error JS</button>
+            <button id="btn-ver-db" onclick="viewRecentEvents()">🔍 Inspeccionar DB (Enriquecida)</button>
         </div>
-        <div class="console" id="log-box">[WolfTester] Inicializando SDK...</div>
+        <div class="console" id="log-box">[WolfTester] Inicializando SDK desde /sdk/tracker.js...</div>
     </div>
     <script src="inyeccion.js"></script>
     <script>
         if (typeof injectMicroFooter === 'function') injectMicroFooter();
-        const logBox = document.getElementById('log-box');
-        function log(msg) { logBox.innerHTML += `<br/>&gt; ${msg}`; logBox.scrollTop = logBox.scrollHeight; }
-        function trackCustomPurchase() {
+        const box = document.getElementById('log-box');
+        function log(m) { box.innerHTML += `<br/>&gt; ${m}`; box.scrollTop = box.scrollHeight; }
+        function testCustomEvent() {
             if (window.WolfAnalytics) {
-                window.WolfAnalytics.track('purchase', { element: '#btn-comprar', price: 45.00, currency: 'USD', promo: 'verano' });
+                window.WolfAnalytics.track('purchase', { element: '#btn-compra', price: 45.0, currency: 'USD' });
                 window.WolfAnalytics.flush();
-                log("Evento 'purchase' enviado con payload JSON flexible: price=45.0, currency='USD'");
+                log("Evento 'purchase' enviado. Enriquecido con User-Agent e IP.");
             }
         }
-        function trackCustomNav(sec) {
-            if (window.WolfAnalytics) {
-                window.WolfAnalytics.track('navigation', { section: sec, timestamp: Date.now() });
-                window.WolfAnalytics.flush();
-                log(`Navegación a sección '${sec}' registrada.`);
-            }
+        function triggerClientError() {
+            log("Disparando excepción intencional para el centinela de errores...");
+            setTimeout(function() { nonExistentFunctionCall(); }, 10);
         }
-        function fetchRecentEvents() {
-            fetch('/api/v1/events/wk_test_12345?limit=3')
+        function viewRecentEvents() {
+            fetch('/api/v1/events/wk_test_12345?limit=2')
                 .then(r => r.json())
-                .then(d => log("Últimos eventos en DB:<br/>" + JSON.stringify(d.events, null, 2)))
+                .then(d => log("Últimos eventos con metadata:<br/>" + JSON.stringify(d.events, null, 2)))
                 .catch(e => log("Error: " + e));
         }
     </script>
-    <script src="http://127.0.0.1:5000/tracker.js" data-site-key="wk_test_12345" async></script>
+    <!-- SDK descargado desde el módulo independiente /sdk/tracker.js -->
+    <script src="http://127.0.0.1:5000/sdk/tracker.js" data-site-key="wk_test_12345" async></script>
 </body>
 </html>
