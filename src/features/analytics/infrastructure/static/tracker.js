@@ -1,5 +1,5 @@
 /**
- * WolfAnalytics Client SDK (v1.0.0)
+ * WolfAnalytics Client SDK (v1.1.0 - Flexible JSON Payload)
  * Gobernanza: Límite estricto < 150 líneas.
  */
 (function () {
@@ -30,37 +30,45 @@
     .then(function(result) {
         if (!result.ok || !result.data.valid) {
             console.warn("WolfAnalytics: SDK Bloqueado ->", result.data.error || "Licencia inactiva.");
-            return; // BLOQUEO TOTAL: El SDK finaliza inmediatamente sin activar listeners
+            return; // BLOQUEO TOTAL
         }
 
-        console.info("WolfAnalytics: Licencia válida. Iniciando recolección para:", result.data.domain);
+        console.info("WolfAnalytics: Licencia activa. Iniciando recolección para:", result.data.domain);
         initializeTracker(siteKey, API_BASE);
     })
     .catch(function(err) {
         console.error("WolfAnalytics: No se pudo conectar con el servidor de licencias.", err);
     });
 
-    // 2. MOTOR DE RECOLECCIÓN (Solo se ejecuta si la llave fue aprobada)
+    // 2. MOTOR DE RECOLECCIÓN FLEXIBLE
     function initializeTracker(key, apiBase) {
         const eventsBuffer = [];
 
+        function pushEvent(eventType, eventData) {
+            eventsBuffer.push({
+                event_type: eventType,
+                page_url: window.location.href,
+                event_data: eventData || {}
+            });
+        }
+
         // Registrar visita inicial (Pageview)
-        eventsBuffer.push({
-            type: 'pageview',
-            target: document.title || 'Page',
-            url: window.location.href
+        pushEvent('pageview', {
+            title: document.title || 'Page',
+            referrer: document.referrer || null,
+            screen: window.innerWidth + 'x' + window.innerHeight
         });
 
-        // Interceptar clics en elementos interactivos
+        // Interceptar clics en el DOM
         document.addEventListener('click', function(e) {
-            const targetEl = e.target;
-            const identifier = targetEl.tagName + (targetEl.id ? '#' + targetEl.id : '') +
-                (targetEl.className ? '.' + targetEl.className.split(' ')[0] : '');
+            const el = e.target;
+            const identifier = el.tagName + (el.id ? '#' + el.id : '') +
+                (el.className ? '.' + String(el.className).split(' ')[0] : '');
 
-            eventsBuffer.push({
-                type: 'click',
-                target: identifier,
-                url: window.location.href
+            pushEvent('click', {
+                element: identifier,
+                text: (el.innerText || '').slice(0, 50).trim(),
+                dataset: Object.assign({}, el.dataset)
             });
         }, true);
 
@@ -89,13 +97,21 @@
         window.addEventListener('pagehide', flushEvents);
         window.addEventListener('beforeunload', flushEvents);
 
-        // Actualizar dinámicamente el badge si existe en pantalla
+        // API pública para enviar eventos personalizados con JSON enriquecido
+        window.WolfAnalytics = {
+            track: function(eventType, customData) {
+                pushEvent(eventType, customData);
+            },
+            flush: flushEvents
+        };
+
+        // Actualizar dinámicamente el badge si existe
         fetch(apiBase + '/stats/' + encodeURIComponent(key))
             .then(function(res) { return res.json(); })
             .then(function(data) {
-                const counterBadge = document.getElementById('wc-number');
-                if (counterBadge && typeof data.total_events === 'number') {
-                    counterBadge.textContent = data.total_events;
+                const badge = document.getElementById('wc-number');
+                if (badge && typeof data.total_events === 'number') {
+                    badge.textContent = data.total_events;
                 }
             })
             .catch(function() {});

@@ -1,9 +1,10 @@
 """
-Gestión de persistencia SQLite encapsulada.
+Gestión de persistencia SQLite encapsulada con soporte de migraciones.
 Gobernanza: Límite estricto < 150 líneas.
 """
 from typing import ContextManager
 from contextlib import contextmanager
+from pathlib import Path
 import sqlite3
 from src.core.config.settings import settings
 
@@ -35,12 +36,21 @@ class DatabaseManager:
             conn.close()
 
     def initialize_schema(self, schema_file: str = str(settings.SCHEMA_PATH)) -> None:
-        """Ejecuta el script DDL inicial de forma idempotente."""
+        """Aplica el esquema DDL y ejecuta migraciones pendientes."""
         with open(schema_file, "r", encoding="utf-8") as f:
             ddl_script = f.read()
-        
+
         with self.session() as conn:
             conn.executescript(ddl_script)
+            # Verificar si se requiere migrar a event_data
+            cursor = conn.cursor()
+            cursor.execute("PRAGMA table_info(telemetry_events);")
+            columns = [col["name"] for col in cursor.fetchall()]
+            if "event_data" not in columns:
+                migration_file = Path(schema_file).parent / "002_hybrid_json_schema.sql"
+                if migration_file.exists():
+                    with open(migration_file, "r", encoding="utf-8") as mf:
+                        conn.executescript(mf.read())
 
 
 db_manager = DatabaseManager()

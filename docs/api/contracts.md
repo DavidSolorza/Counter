@@ -1,6 +1,6 @@
 # Contratos de API: WolfAnalytics Service
 
-- **Versión:** 1.0.0
+- **Versión:** 1.1.0
 - **Base URL:** `http://127.0.0.1:5000/api/v1`
 - **Formato:** JSON (`application/json`)
 
@@ -12,7 +12,6 @@ Verifica si la `site_key` enviada por el SDK cliente está activa y autorizada p
 
 - **Método:** `POST`
 - **Ruta:** `/verify`
-- **Cabeceras:** `Content-Type: application/json`
 
 ### Request Body
 ```json
@@ -22,33 +21,17 @@ Verifica si la `site_key` enviada por el SDK cliente está activa y autorizada p
 ```
 
 ### Respuestas
-
-#### `200 OK` (Licencia Válida)
-```json
-{
-  "valid": true,
-  "message": "Licencia activa. SDK desbloqueado.",
-  "domain": "localhost"
-}
-```
-
-#### `403 Forbidden` (Licencia Inválida, Inactiva o No Proporcionada)
-```json
-{
-  "valid": false,
-  "error": "Licencia inválida o inactiva. SDK bloqueado."
-}
-```
+- `200 OK`: `{"valid": true, "message": "Licencia activa. SDK desbloqueado.", "domain": "localhost"}`
+- `403 Forbidden`: `{"valid": false, "error": "Licencia inválida o inactiva. SDK bloqueado."}`
 
 ---
 
-## 2. Ingesta de Telemetría
+## 2. Ingesta de Telemetría Flexible (Esquema Híbrido)
 
-Recibe un lote de eventos capturados por el SDK cliente.
+Recibe un lote de eventos con objetos dinámicos variables en `event_data`.
 
 - **Método:** `POST`
 - **Ruta:** `/telemetry`
-- **Cabeceras:** `Content-Type: application/json` (o `text/plain` enviado por `navigator.sendBeacon`)
 
 ### Request Body
 ```json
@@ -56,46 +39,20 @@ Recibe un lote de eventos capturados por el SDK cliente.
   "site_key": "wk_test_12345",
   "events": [
     {
-      "type": "pageview",
-      "target": "Mi Web de Prueba",
-      "url": "http://127.0.0.1:5000/test"
-    },
-    {
-      "type": "click",
-      "target": "BUTTON#btn-comprar",
-      "url": "http://127.0.0.1:5000/test"
+      "event_type": "click",
+      "page_url": "http://127.0.0.1:5000/test",
+      "event_data": {
+        "element": "button#btn-comprar",
+        "price": 45.00,
+        "currency": "USD",
+        "custom_attr": "promo_verano"
+      }
     }
   ]
 }
 ```
 
 ### Respuestas
-
-#### `200 OK` (Ingesta Exitosa)
-```json
-{
-  "success": true,
-  "stored": 2
-}
-```
-
-#### `400 Bad Request` (Payload malformado)
-```json
-{
-  "error": "El payload debe contener site_key y una lista de eventos válida."
-}
-```
-
-#### `403 Forbidden` (Llave de sitio no autorizada)
-```json
-{
-  "error": "Unauthorized: Invalid key"
-}
-```
-
----
-
-## 3. Servidor de Assets Estáticos
-
-- **Ruta:** `/tracker.js` (GET) - Entrega el script del SDK para inclusión vía `<script src="http://127.0.0.1:5000/tracker.js" ...>`
-- **Ruta:** `/test` (GET) - Entrega la interfaz de demostración interactiva (`prueba.html`)
+- `200 OK`: `{"success": true, "stored": 1}`
+- `400 Bad Request`: `{"error": "Payload de telemetría inválido o malformado."}`
+- `403 Forbidden`: `{"error": "Unauthorized: Invalid key"}`

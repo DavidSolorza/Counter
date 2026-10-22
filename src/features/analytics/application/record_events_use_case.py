@@ -1,5 +1,5 @@
 """
-Caso de uso: Registro e Ingesta de Lotes de Telemetría.
+Caso de uso: Registro e Ingesta de Lotes de Telemetría Híbrida.
 Gobernanza: Límite estricto < 150 líneas.
 """
 from typing import List, Dict, Any, Optional
@@ -14,7 +14,7 @@ from src.core.errors.exceptions import (
 
 
 class RecordEventsUseCase:
-    """Valida la autorización del sitio y almacena el lote de telemetría."""
+    """Valida la autorización del sitio y almacena el lote de telemetría flexible."""
 
     def __init__(
         self,
@@ -41,15 +41,27 @@ class RecordEventsUseCase:
         event_entities: List[TelemetryEvent] = []
         for raw in raw_events:
             try:
+                event_type = raw.get("event_type") or raw.get("type", "unknown")
+                page_url = raw.get("page_url") or raw.get("url", "")
+                
+                # Normalización de event_data
+                event_data = raw.get("event_data")
+                if not isinstance(event_data, dict):
+                    event_data = {}
+                    if "target" in raw:
+                        event_data["element"] = raw["target"]
+                    if "element_target" in raw:
+                        event_data["element"] = raw["element_target"]
+
                 entity = TelemetryEvent(
                     site_key=site.site_key,
-                    event_type=str(raw.get("type", "unknown")),
-                    element_target=raw.get("target"),
-                    page_url=str(raw.get("url", ""))
+                    event_type=str(event_type),
+                    page_url=str(page_url),
+                    event_data=event_data
                 )
                 entity.validate()
                 event_entities.append(entity)
-            except ValueError as ex:
+            except ValueError:
                 continue
 
         if not event_entities:

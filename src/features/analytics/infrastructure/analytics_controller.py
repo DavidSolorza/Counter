@@ -45,6 +45,14 @@ def receive_telemetry() -> tuple[Response, int]:
 
 @analytics_bp.route("/stats/<string:site_key>", methods=["GET"])
 def get_site_stats(site_key: str) -> tuple[Response, int]:
-    """Endpoint auxiliar para obtener el conteo de visitas/eventos en tiempo real."""
+    """Endpoint para obtener el conteo total de eventos de un sitio."""
     total = _event_repo.count_by_site_key(site_key)
     return jsonify({"site_key": site_key, "total_events": total}), 200
+
+
+@analytics_bp.route("/events/<string:site_key>", methods=["GET"])
+def get_site_events(site_key: str) -> tuple[Response, int]:
+    """Endpoint para inspeccionar los eventos recientes y sus datos JSON variables."""
+    limit = int(request.args.get("limit", 10))
+    events = _event_repo.get_recent_by_site_key(site_key, limit=limit)
+    return jsonify({"site_key": site_key, "events": events}), 200

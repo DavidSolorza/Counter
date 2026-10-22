@@ -3,7 +3,7 @@ Contrato de interfaz para el repositorio de Eventos de Telemetría.
 Gobernanza: Límite estricto < 150 líneas.
 """
 from abc import ABC, abstractmethod
-from typing import List
+from typing import List, Dict, Any
 from src.features.analytics.domain.event_entity import TelemetryEvent
 
 
@@ -18,4 +18,9 @@ class EventRepositoryInterface(ABC):
     @abstractmethod
     def count_by_site_key(self, site_key: str) -> int:
         """Retorna el número acumulado de eventos registrados para un sitio."""
+        pass
+
+    @abstractmethod
+    def get_recent_by_site_key(self, site_key: str, limit: int = 10) -> List[Dict[str, Any]]:
+        """Recupera los eventos más recientes deserializando event_data."""
         pass

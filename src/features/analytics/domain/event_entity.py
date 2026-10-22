@@ -1,18 +1,18 @@
 """
-Entidad de dominio: TelemetryEvent (Evento de Telemetría).
+Entidad de dominio: TelemetryEvent (Evento de Telemetría Híbrido).
 Gobernanza: Límite estricto < 150 líneas.
 """
-from dataclasses import dataclass
-from typing import Optional
+from dataclasses import dataclass, field
+from typing import Optional, Dict, Any
 
 
 @dataclass
 class TelemetryEvent:
-    """Representa una acción o medición capturada por el SDK cliente."""
+    """Representa una acción o medición con carga útil variable JSON."""
     site_key: str
     event_type: str
-    element_target: Optional[str]
     page_url: str
+    event_data: Dict[str, Any] = field(default_factory=dict)
     id: Optional[int] = None
     created_at: Optional[str] = None
 
@@ -24,3 +24,5 @@ class TelemetryEvent:
             raise ValueError("El event_type es obligatorio.")
         if not self.page_url or not self.page_url.strip():
             raise ValueError("El page_url es obligatorio.")
+        if not isinstance(self.event_data, dict):
+            raise ValueError("El event_data debe ser un diccionario.")

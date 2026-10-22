@@ -28,7 +28,7 @@ def create_app() -> Flask:
     def index() -> tuple[Response, int]:
         return jsonify({
             "service": "WolfAnalytics API",
-            "version": "1.0.0",
+            "version": "1.1.0",
             "status": "online",
             "docs": "/docs/api/contracts.md",
             "test_ui": "/test"
@@ -38,6 +38,11 @@ def create_app() -> Flask:
     def serve_tracker() -> Response:
         tracker_file = Path(__file__).resolve().parent / "src" / "features" / "analytics" / "infrastructure" / "static" / "tracker.js"
         return send_file(tracker_file, mimetype="application/javascript")
+
+    @app.route("/inyeccion.js", methods=["GET"])
+    def serve_inyeccion() -> Response:
+        inyeccion_file = Path(__file__).resolve().parent / "inyeccion.js"
+        return send_file(inyeccion_file, mimetype="application/javascript")
 
     @app.route("/test", methods=["GET"])
     def serve_test_page() -> Response:
