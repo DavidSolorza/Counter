@@ -1,45 +1,25 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>WolfAnalytics Enterprise - Demo Tripartita</title>
     <style>
-        :root {
-            --bg: #09090b; --card: #18181b; --accent: #22c55e;
-            --text: #fafafa; --muted: #a1a1aa; --border: rgba(255, 255, 255, 0.1);
-        }
+        :root { --bg: #f8fafc; --card: #ffffff; --accent: #16a34a; --text: #0f172a; --muted: #64748b; --border: #e2e8f0; }
         * { box-sizing: border-box; margin: 0; padding: 0; }
-        body {
-            background: var(--bg); color: var(--text); font-family: system-ui, sans-serif;
-            min-height: 100vh; display: flex; flex-direction: column; align-items: center;
-            justify-content: center; padding: 20px;
-        }
-        .container {
-            width: 100%; max-width: 650px; background: var(--card); border: 1px solid var(--border);
-            border-radius: 16px; padding: 26px; box-shadow: 0 10px 30px rgba(0,0,0,0.5); text-align: center;
-        }
-        h1 { font-size: 22px; margin-bottom: 6px; }
+        body { background: var(--bg); color: var(--text); font-family: system-ui, sans-serif; min-height: 100vh; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 20px; }
+        .container { width: 100%; max-width: 650px; background: var(--card); border: 1px solid var(--border); border-radius: 16px; padding: 26px; box-shadow: 0 10px 25px rgba(0,0,0,0.06); text-align: center; }
+        h1 { font-size: 22px; margin-bottom: 6px; color: #0f172a; }
         p.sub { color: var(--muted); font-size: 13px; margin-bottom: 18px; }
-        .badge {
-            display: inline-flex; align-items: center; gap: 8px; padding: 6px 14px;
-            background: linear-gradient(135deg, #18181b, #27272a); border-radius: 9999px;
-            font-size: 13px; border: 1px solid var(--border); margin-bottom: 18px;
-        }
-        .dot { width: 8px; height: 8px; background: var(--accent); border-radius: 50%; box-shadow: 0 0 8px var(--accent); }
+        .badge { display: inline-flex; align-items: center; gap: 8px; padding: 6px 14px; background: #f1f5f9; border-radius: 9999px; font-size: 13px; border: 1px solid var(--border); margin-bottom: 18px; color: #334155; }
+        .dot { width: 8px; height: 8px; background: var(--accent); border-radius: 50%; box-shadow: 0 0 6px var(--accent); }
         .actions { display: flex; gap: 8px; justify-content: center; flex-wrap: wrap; margin-bottom: 18px; }
-        button {
-            background: #27272a; color: #fff; border: 1px solid var(--border); border-radius: 8px;
-            padding: 8px 12px; font-size: 12px; cursor: pointer; transition: 0.2s;
-        }
-        button:hover { background: #3f3f46; transform: translateY(-1px); }
-        button.primary { background: #15803d; border-color: #22c55e; }
-        button.danger { background: #991b1b; border-color: #ef4444; }
-        .console {
-            background: #000; border-radius: 8px; padding: 12px; font-family: monospace;
-            font-size: 11px; color: #4ade80; text-align: left; max-height: 160px; overflow-y: auto;
-            border: 1px solid var(--border);
-        }
+        button { background: #ffffff; color: #1e293b; border: 1px solid var(--border); border-radius: 8px; padding: 8px 14px; font-size: 12px; font-weight: 600; cursor: pointer; transition: 0.15s; }
+        button:hover { background: #f1f5f9; transform: translateY(-1px); }
+        button.primary { background: #16a34a; color: #fff; border-color: #15803d; }
+        button.primary:hover { background: #15803d; }
+        button.danger { background: #dc2626; color: #fff; border-color: #b91c1c; }
+        button.danger:hover { background: #b91c1c; }
+        .console { background: #0f172a; border-radius: 8px; padding: 12px; font-family: monospace; font-size: 11px; color: #38bdf8; text-align: left; max-height: 160px; overflow-y: auto; border: 1px solid #1e293b; }
     </style>
 </head>
 <body>
@@ -50,7 +30,7 @@
             <span class="dot"></span>
             <span><strong id="wc-number">...</strong> eventos en DB</span>
             <span style="opacity: 0.3;">|</span>
-            <a href="https://servidor.blog" target="_blank" style="color: #a1a1aa; text-decoration: none;">WolfStats</a>
+            <a href="https://servidor.blog" target="_blank" style="color: #64748b; text-decoration: none;">WolfStats</a>
         </div>
         <div class="actions">
             <button id="btn-compra" class="primary" onclick="testCustomEvent()">🛒 Compra ($45 USD)</button>
@@ -82,7 +62,6 @@
                 .catch(e => log("Error: " + e));
         }
     </script>
-    <!-- SDK descargado desde el módulo independiente /sdk/tracker.js -->
     <script src="http://127.0.0.1:5000/sdk/tracker.js" data-site-key="wk_test_12345" async></script>
 </body>
 </html>

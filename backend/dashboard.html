@@ -4,33 +4,35 @@
     <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Counter - Enterprise Intelligence Platform</title>
     <style>
-        :root { --bg: #09090b; --card: #18181b; --accent: #22c55e; --text: #fafafa; --muted: #a1a1aa; --border: rgba(255,255,255,0.1); }
+        :root { --bg: #f8fafc; --card: #ffffff; --accent: #2563eb; --text: #0f172a; --muted: #64748b; --border: #e2e8f0; }
         * { box-sizing: border-box; margin: 0; padding: 0; }
-        body { background: var(--bg); color: var(--text); font-family: system-ui, sans-serif; padding: 20px; font-size: 13px; }
-        .topbar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; border-bottom: 1px solid var(--border); padding-bottom: 12px; }
-        .brand { font-size: 18px; font-weight: 700; }
-        .btn { background: #27272a; color: #fff; padding: 6px 12px; border-radius: 6px; text-decoration: none; font-size: 11px; border: 1px solid var(--border); cursor: pointer; }
-        .btn-primary { background: #16a34a; border-color: #22c55e; }
-        .grid4 { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 10px; margin-bottom: 16px; }
+        body { background: var(--bg); color: var(--text); font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; padding: 20px; font-size: 13px; }
+        .topbar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; background: #fff; padding: 12px 18px; border-radius: 10px; border: 1px solid var(--border); box-shadow: 0 1px 3px rgba(0,0,0,0.04); }
+        .brand { font-size: 17px; font-weight: 700; color: #0f172a; display: flex; align-items: center; gap: 8px; }
+        .btn { background: #fff; color: #1e293b; padding: 6px 12px; border-radius: 6px; text-decoration: none; font-size: 11px; font-weight: 600; border: 1px solid var(--border); cursor: pointer; }
+        .btn:hover { background: #f1f5f9; }
+        .btn-primary { background: #2563eb; color: #fff; border-color: #1d4ed8; }
+        .btn-primary:hover { background: #1d4ed8; }
+        .grid4 { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 12px; margin-bottom: 16px; }
         .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 16px; }
-        .card { background: var(--card); border: 1px solid var(--border); border-radius: 8px; padding: 12px; }
-        .card h4 { font-size: 10px; color: var(--muted); text-transform: uppercase; margin-bottom: 3px; }
-        .card .num { font-size: 22px; font-weight: 700; }
+        .card { background: var(--card); border: 1px solid var(--border); border-radius: 10px; padding: 14px; box-shadow: 0 1px 3px rgba(0,0,0,0.04); }
+        .card h4 { font-size: 11px; color: var(--muted); text-transform: uppercase; font-weight: 600; margin-bottom: 4px; }
+        .card .num { font-size: 24px; font-weight: 700; }
         .bar-wrap { margin-top: 6px; }
-        .bar-label { display: flex; justify-content: space-between; font-size: 11px; margin-bottom: 2px; }
-        .bar-bg { background: #27272a; border-radius: 4px; height: 7px; overflow: hidden; }
+        .bar-label { display: flex; justify-content: space-between; font-size: 11px; margin-bottom: 2px; color: #334155; }
+        .bar-bg { background: #f1f5f9; border-radius: 4px; height: 7px; overflow: hidden; }
         .bar-fill { background: var(--accent); height: 100%; border-radius: 4px; }
-        table { width: 100%; border-collapse: collapse; background: var(--card); border: 1px solid var(--border); border-radius: 8px; font-size: 11px; }
-        th, td { padding: 8px 10px; text-align: left; border-bottom: 1px solid var(--border); }
-        th { background: #27272a; color: var(--muted); }
-        .badge { padding: 2px 6px; border-radius: 4px; font-size: 10px; font-weight: 600; }
-        .b-click { background: #1e3a5f; color: #60a5fa; }
-        .b-rage { background: #7c2d12; color: #fb923c; }
-        .b-err { background: #450a0a; color: #f87171; }
-        .b-vit { background: #064e3b; color: #34d399; }
-        .b-scr { background: #3b0764; color: #c084fc; }
-        .modal { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.8); align-items: center; justify-content: center; z-index: 100; }
-        .modal-body { background: var(--card); border: 1px solid var(--border); border-radius: 10px; padding: 20px; max-width: 440px; width: 90%; }
+        table { width: 100%; border-collapse: collapse; background: var(--card); border: 1px solid var(--border); border-radius: 10px; font-size: 11px; overflow: hidden; box-shadow: 0 1px 3px rgba(0,0,0,0.04); }
+        th, td { padding: 9px 12px; text-align: left; border-bottom: 1px solid var(--border); }
+        th { background: #f8fafc; color: #475569; font-weight: 600; }
+        .badge { padding: 2px 7px; border-radius: 9999px; font-size: 10px; font-weight: 600; }
+        .b-click { background: #dbeafe; color: #1d4ed8; }
+        .b-rage { background: #ffedd5; color: #c2410c; }
+        .b-err { background: #fee2e2; color: #b91c1c; }
+        .b-vit { background: #dcfce7; color: #15803d; }
+        .b-scr { background: #f3e8ff; color: #7e22ce; }
+        .modal { display: none; position: fixed; inset: 0; background: rgba(15,23,42,0.4); align-items: center; justify-content: center; z-index: 100; }
+        .modal-body { background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 20px; max-width: 440px; width: 90%; box-shadow: 0 10px 25px rgba(0,0,0,0.1); }
     </style>
 </head>
 <body>
@@ -43,9 +45,9 @@
     </div>
     <div class="grid4">
         <div class="card"><h4>Eventos Totales</h4><div class="num" id="s-tot">...</div></div>
-        <div class="card"><h4>Clics Registrados</h4><div class="num" id="s-cli" style="color:#60a5fa;">...</div></div>
-        <div class="card"><h4>Rage Clicks (Fricción)</h4><div class="num" id="s-rag" style="color:#fb923c;">...</div></div>
-        <div class="card"><h4>Errores de Script</h4><div class="num" id="s-err" style="color:#f87171;">...</div></div>
+        <div class="card"><h4>Clics Registrados</h4><div class="num" id="s-cli" style="color:#2563eb;">...</div></div>
+        <div class="card"><h4>Rage Clicks (Fricción)</h4><div class="num" id="s-rag" style="color:#ea580c;">...</div></div>
+        <div class="card"><h4>Errores de Script</h4><div class="num" id="s-err" style="color:#dc2626;">...</div></div>
     </div>
     <div class="grid2">
         <div class="card">
@@ -58,7 +60,7 @@
         </div>
     </div>
     <table>
-        <thead><tr><th>Hora</th><th>Tipo</th><th>Página URL</th><th>Navegador / SO</th><th>IP Origen</th><th>Metadata</th></tr></thead>
+        <thead><tr><th>Hora</th><th>Tipo</th><th>Componente Recreado</th><th>Página URL</th><th>Navegador / SO</th><th>IP Origen</th></tr></thead>
         <tbody id="tbl-events"><tr><td colspan="6" style="text-align: center; color: var(--muted);">Cargando telemetría en vivo...</td></tr></tbody>
     </table>
     <div id="c-modal" class="modal" onclick="if(event.target===this)this.style.display='none'">
@@ -71,6 +73,18 @@
         </div>
     </div>
     <script>
+        function renderVisual(v, fallback) {
+            if (!v) return `<code style="color:#64748b; font-size:10px;">${fallback || '—'}</code>`;
+            if (v.type === 'button') {
+                const bg = (v.bg && v.bg !== 'rgba(0, 0, 0, 0)') ? v.bg : '#f1f5f9';
+                const col = v.color || '#0f172a';
+                return `<span style="display:inline-block; padding:2px 8px; font-size:10px; font-weight:600; border-radius:${v.radius||'4px'}; background:${bg}; color:${col}; border:1px solid #cbd5e1; box-shadow:0 1px 2px rgba(0,0,0,0.05); pointer-events:none; max-width:130px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">🔘 ${v.text||'Botón'}</span>`;
+            }
+            if (v.type === 'image') return `<span style="display:inline-flex; align-items:center; gap:4px; padding:2px 6px; font-size:10px; border-radius:4px; background:#f1f5f9; color:#475569; border:1px dashed #94a3b8; pointer-events:none;">🖼️ [${v.alt||'Imagen'}]</span>`;
+            if (v.type === 'video') return `<span style="display:inline-flex; align-items:center; gap:4px; padding:2px 6px; font-size:10px; border-radius:4px; background:#0f172a; color:#fff; pointer-events:none;">▶️ [${v.label||'Video'}]</span>`;
+            if (v.type === 'card') return `<span style="display:inline-block; padding:2px 6px; font-size:10px; border-radius:4px; background:#fff; color:#334155; border:1px solid #cbd5e1; pointer-events:none;">🃏 [Card: ${v.text||'Card'}]</span>`;
+            return `<code style="color:#64748b; font-size:10px;">${fallback||'—'}</code>`;
+        }
         function update() {
             fetch('/api/v1/analytics/summary/wk_test_12345').then(r=>r.json()).then(d=>{
                 document.getElementById('s-tot').textContent = d.total_events || 0;
@@ -93,8 +107,8 @@
                     const c = (e.event_data && e.event_data._client) || {};
                     const net = (e.event_data && e.event_data._network) || {};
                     const tc = e.event_type==='rage_click'?'b-rage':(e.event_type.includes('error')?'b-err':(e.event_type==='scroll_milestone'?'b-scr':(e.event_type==='web_vitals'?'b-vit':(e.event_type==='click'?'b-click':''))));
-                    const clean = Object.assign({}, e.event_data); delete clean._client; delete clean._network;
-                    return `<tr><td>${e.created_at?e.created_at.split(' ')[1]:''}</td><td><span class="badge ${tc}">${e.event_type}</span></td><td style="max-width:140px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">${e.page_url}</td><td>${c.browser||'Other'} / ${c.os||'OS'}</td><td>${net.client_ip||'127.0.0.1'}</td><td style="font-family:monospace; color:#a7f3d0; max-width:220px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">${JSON.stringify(clean)}</td></tr>`;
+                    const vComp = renderVisual(e.event_data?.visual, e.event_data?.element || e.event_data?.depth || e.event_data?.metric);
+                    return `<tr><td>${e.created_at?e.created_at.split(' ')[1]:''}</td><td><span class="badge ${tc}">${e.event_type}</span></td><td>${vComp}</td><td style="max-width:140px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">${e.page_url}</td><td>${c.browser||'Other'} / ${c.os||'OS'}</td><td>${net.client_ip||'127.0.0.1'}</td></tr>`;
                 }).join('');
             });
         }
