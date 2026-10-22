@@ -2,85 +2,103 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Counter - Enterprise Analytics Platform</title>
+    <title>Counter - Enterprise Intelligence Platform</title>
     <style>
         :root { --bg: #09090b; --card: #18181b; --accent: #22c55e; --text: #fafafa; --muted: #a1a1aa; --border: rgba(255,255,255,0.1); }
         * { box-sizing: border-box; margin: 0; padding: 0; }
-        body { background: var(--bg); color: var(--text); font-family: system-ui, sans-serif; padding: 20px; }
-        .topbar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; border-bottom: 1px solid var(--border); padding-bottom: 15px; }
-        .brand { font-size: 20px; font-weight: 700; display: flex; align-items: center; gap: 8px; }
-        .btn { background: #27272a; color: #fff; padding: 7px 12px; border-radius: 6px; text-decoration: none; font-size: 12px; border: 1px solid var(--border); cursor: pointer; }
+        body { background: var(--bg); color: var(--text); font-family: system-ui, sans-serif; padding: 20px; font-size: 13px; }
+        .topbar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; border-bottom: 1px solid var(--border); padding-bottom: 12px; }
+        .brand { font-size: 18px; font-weight: 700; }
+        .btn { background: #27272a; color: #fff; padding: 6px 12px; border-radius: 6px; text-decoration: none; font-size: 11px; border: 1px solid var(--border); cursor: pointer; }
         .btn-primary { background: #16a34a; border-color: #22c55e; }
-        .btn:hover { background: #3f3f46; }
-        .snippet-box { background: #000; border: 1px solid var(--border); border-radius: 8px; padding: 12px; margin-bottom: 20px; font-family: monospace; font-size: 12px; color: #38bdf8; display: flex; justify-content: space-between; align-items: center; }
-        .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 12px; margin-bottom: 20px; }
-        .card { background: var(--card); border: 1px solid var(--border); border-radius: 8px; padding: 14px; }
-        .card h4 { font-size: 11px; color: var(--muted); text-transform: uppercase; margin-bottom: 4px; }
-        .card .num { font-size: 20px; font-weight: 700; }
+        .grid4 { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 10px; margin-bottom: 16px; }
+        .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 16px; }
+        .card { background: var(--card); border: 1px solid var(--border); border-radius: 8px; padding: 12px; }
+        .card h4 { font-size: 10px; color: var(--muted); text-transform: uppercase; margin-bottom: 3px; }
+        .card .num { font-size: 22px; font-weight: 700; }
+        .bar-wrap { margin-top: 6px; }
+        .bar-label { display: flex; justify-content: space-between; font-size: 11px; margin-bottom: 2px; }
+        .bar-bg { background: #27272a; border-radius: 4px; height: 7px; overflow: hidden; }
+        .bar-fill { background: var(--accent); height: 100%; border-radius: 4px; }
         table { width: 100%; border-collapse: collapse; background: var(--card); border: 1px solid var(--border); border-radius: 8px; font-size: 11px; }
-        th, td { padding: 9px 12px; text-align: left; border-bottom: 1px solid var(--border); }
+        th, td { padding: 8px 10px; text-align: left; border-bottom: 1px solid var(--border); }
         th { background: #27272a; color: var(--muted); }
-        .badge { padding: 2px 7px; border-radius: 4px; font-size: 10px; font-weight: 600; }
-        .badge-click { background: #1e3a5f; color: #60a5fa; }
-        .badge-err { background: #450a0a; color: #f87171; }
-        .badge-vit { background: #064e3b; color: #34d399; }
+        .badge { padding: 2px 6px; border-radius: 4px; font-size: 10px; font-weight: 600; }
+        .b-click { background: #1e3a5f; color: #60a5fa; }
+        .b-rage { background: #7c2d12; color: #fb923c; }
+        .b-err { background: #450a0a; color: #f87171; }
+        .b-vit { background: #064e3b; color: #34d399; }
+        .b-scr { background: #3b0764; color: #c084fc; }
         .modal { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.8); align-items: center; justify-content: center; z-index: 100; }
-        .modal-body { background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 24px; max-width: 480px; width: 90%; font-size: 13px; }
+        .modal-body { background: var(--card); border: 1px solid var(--border); border-radius: 10px; padding: 20px; max-width: 440px; width: 90%; }
     </style>
 </head>
 <body>
     <div class="topbar">
-        <div class="brand">⚡ Counter Analytics Platform</div>
+        <div class="brand">⚡ Counter Intelligence Platform</div>
         <div style="display: flex; gap: 8px;">
             <a href="/download/counter.js" class="btn btn-primary">📥 Descargar counter.js</a>
-            <button class="btn" onclick="document.getElementById('contact-modal').style.display='flex'">✉️ Contacto & API</button>
+            <button class="btn" onclick="document.getElementById('c-modal').style.display='flex'">✉️ Soporte & API</button>
         </div>
     </div>
-    <div class="snippet-box">
-        <span>&lt;script src="http://127.0.0.1:5000/counter.js" data-site-key="wk_test_12345" async&gt;&lt;/script&gt;</span>
-        <button class="btn" onclick="navigator.clipboard.writeText(this.previousElementSibling.innerText); alert('¡Copiado!');">Copiar</button>
+    <div class="grid4">
+        <div class="card"><h4>Eventos Totales</h4><div class="num" id="s-tot">...</div></div>
+        <div class="card"><h4>Clics Registrados</h4><div class="num" id="s-cli" style="color:#60a5fa;">...</div></div>
+        <div class="card"><h4>Rage Clicks (Fricción)</h4><div class="num" id="s-rag" style="color:#fb923c;">...</div></div>
+        <div class="card"><h4>Errores de Script</h4><div class="num" id="s-err" style="color:#f87171;">...</div></div>
     </div>
-    <div class="grid">
-        <div class="card"><h4>Total Eventos</h4><div class="num" id="c-total">...</div></div>
-        <div class="card"><h4>Site Key</h4><div class="num" style="color:#38bdf8; font-size:15px;">wk_test_12345</div></div>
-        <div class="card"><h4>Sincronización</h4><div class="num" style="font-size:15px;">Cada 4s / Debounce</div></div>
-        <div class="card"><h4>Seguridad PII</h4><div class="num" style="color:#22c55e; font-size:15px;">Sanitización Activa</div></div>
+    <div class="grid2">
+        <div class="card">
+            <h4>Top Elementos Más Clickeados</h4>
+            <div id="top-el-list" style="margin-top: 6px; color: var(--muted);">Cargando...</div>
+        </div>
+        <div class="card">
+            <h4>Profundidad de Scroll (Lectura)</h4>
+            <div id="scroll-bars" style="margin-top: 6px;">Cargando...</div>
+        </div>
     </div>
     <table>
-        <thead><tr><th>Hora</th><th>Tipo</th><th>Página URL</th><th>Navegador / SO</th><th>IP Origen</th><th>Metadata JSON</th></tr></thead>
-        <tbody id="tbl-events"><tr><td colspan="6" style="text-align: center; color: var(--muted);">Conectando con Counter API...</td></tr></tbody>
+        <thead><tr><th>Hora</th><th>Tipo</th><th>Página URL</th><th>Navegador / SO</th><th>IP Origen</th><th>Metadata</th></tr></thead>
+        <tbody id="tbl-events"><tr><td colspan="6" style="text-align: center; color: var(--muted);">Cargando telemetría en vivo...</td></tr></tbody>
     </table>
-    <div id="contact-modal" class="modal" onclick="if(event.target===this)this.style.display='none'">
+    <div id="c-modal" class="modal" onclick="if(event.target===this)this.style.display='none'">
         <div class="modal-body">
-            <h3 style="margin-bottom: 10px;">Contacto y Solicitud de API Keys</h3>
-            <p style="color: var(--muted); margin-bottom: 12px;">Para registrar un nuevo dominio comercial o solicitar asistencia técnica:</p>
+            <h3>Contacto y Documentación de Counter</h3>
+            <p style="color:var(--muted); margin: 8px 0;">Soporte técnico y claves de producción:</p>
             <p><strong>Email:</strong> soporte@counter.local</p>
             <p style="margin-top: 6px;"><strong>API Base:</strong> <code>http://127.0.0.1:5000/api/v1</code></p>
-            <p style="margin-top: 6px;"><strong>Documentación:</strong> <a href="/docs/api/contracts.md" style="color: #38bdf8;">Contratos REST</a></p>
-            <button class="btn" style="margin-top: 16px; width: 100%;" onclick="document.getElementById('contact-modal').style.display='none'">Cerrar</button>
+            <button class="btn" style="margin-top: 14px; width: 100%;" onclick="document.getElementById('c-modal').style.display='none'">Cerrar</button>
         </div>
     </div>
     <script>
-        function refresh() {
-            fetch('/api/v1/stats/wk_test_12345').then(r=>r.json()).then(d=>document.getElementById('c-total').textContent=d.total_events||0);
-            fetch('/api/v1/events/wk_test_12345?limit=10').then(r=>r.json()).then(d=>{
+        function update() {
+            fetch('/api/v1/analytics/summary/wk_test_12345').then(r=>r.json()).then(d=>{
+                document.getElementById('s-tot').textContent = d.total_events || 0;
+                document.getElementById('s-cli').textContent = d.total_clicks || 0;
+                document.getElementById('s-rag').textContent = d.rage_clicks || 0;
+                document.getElementById('s-err').textContent = d.errors_count || 0;
+                const elList = document.getElementById('top-el-list');
+                elList.innerHTML = (d.top_elements||[]).map(e=>`<div style="display:flex; justify-content:space-between; margin-bottom:4px; font-size:11px;"><code>${e.element}</code><strong>${e.clicks} clics</strong></div>`).join('') || 'Sin clics aún.';
+                const sc = d.scroll_milestones || {};
+                const scMax = Math.max(sc['25%']||0, sc['50%']||0, sc['75%']||0, sc['100%']||0, 1);
+                document.getElementById('scroll-bars').innerHTML = ['25%', '50%', '75%', '100%'].map(m => {
+                    const cnt = sc[m] || 0; const pct = Math.round((cnt / scMax) * 100);
+                    return `<div class="bar-wrap"><div class="bar-label"><span>${m}</span><span>${cnt} visitas</span></div><div class="bar-bg"><div class="bar-fill" style="width:${pct}%;"></div></div></div>`;
+                }).join('');
+            });
+            fetch('/api/v1/events/wk_test_12345?limit=8').then(r=>r.json()).then(d=>{
                 const tb = document.getElementById('tbl-events');
                 if (!d.events || !d.events.length) return;
                 tb.innerHTML = d.events.map(e => {
                     const c = (e.event_data && e.event_data._client) || {};
                     const net = (e.event_data && e.event_data._network) || {};
-                    const tc = e.event_type.includes('error') ? 'badge-err' : (e.event_type.includes('vital') ? 'badge-vit' : (e.event_type==='click'?'badge-click':''));
+                    const tc = e.event_type==='rage_click'?'b-rage':(e.event_type.includes('error')?'b-err':(e.event_type==='scroll_milestone'?'b-scr':(e.event_type==='web_vitals'?'b-vit':(e.event_type==='click'?'b-click':''))));
                     const clean = Object.assign({}, e.event_data); delete clean._client; delete clean._network;
-                    return `<tr><td>${e.created_at?e.created_at.split(' ')[1]:''}</td>
-                        <td><span class="badge ${tc}">${e.event_type}</span></td>
-                        <td style="max-width:160px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">${e.page_url}</td>
-                        <td>${c.browser||'Other'} / ${c.os||'OS'}</td>
-                        <td>${net.client_ip||'127.0.0.1'}</td>
-                        <td style="font-family:monospace; color:#a7f3d0; max-width:260px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">${JSON.stringify(clean)}</td></tr>`;
+                    return `<tr><td>${e.created_at?e.created_at.split(' ')[1]:''}</td><td><span class="badge ${tc}">${e.event_type}</span></td><td style="max-width:140px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">${e.page_url}</td><td>${c.browser||'Other'} / ${c.os||'OS'}</td><td>${net.client_ip||'127.0.0.1'}</td><td style="font-family:monospace; color:#a7f3d0; max-width:220px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">${JSON.stringify(clean)}</td></tr>`;
                 }).join('');
             });
         }
-        setInterval(refresh, 2000); refresh();
+        setInterval(update, 2000); update();
     </script>
 </body>
 </html>

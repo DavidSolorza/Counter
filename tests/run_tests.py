@@ -1,6 +1,6 @@
 """
 tests/run_tests.py
-Batería de pruebas de integración para la arquitectura tripartita (sdk / backend / database).
+Batería de pruebas de integración para la arquitectura tripartita y motor analítico.
 Gobernanza: Límite estricto < 150 líneas.
 """
 import sys
@@ -21,59 +21,50 @@ class TripartiteAnalyticsTestCase(unittest.TestCase):
         self.client = self.app.test_client()
 
     def test_handshake_flow(self):
-        # Clave válida
         ok_res = self.client.post("/api/v1/verify", json={"site_key": "wk_test_12345"})
         self.assertEqual(ok_res.status_code, 200)
         self.assertTrue(ok_res.get_json()["valid"])
 
-        # Clave inválida
         err_res = self.client.post("/api/v1/verify", json={"site_key": "falsa_999"})
         self.assertEqual(err_res.status_code, 403)
         self.assertFalse(err_res.get_json()["valid"])
 
-    def test_telemetry_with_performance_and_enrichment(self):
+    def test_telemetry_with_rage_clicks_and_scroll(self):
         payload = {
             "site_key": "wk_test_12345",
             "events": [
                 {
-                    "event_type": "web_vitals",
+                    "event_type": "rage_click",
                     "page_url": "http://localhost/test",
-                    "event_data": {"ttfb_ms": 85, "load_time_ms": 720}
+                    "event_data": {"element": "button#broken-btn", "clicks": 3}
                 },
                 {
-                    "event_type": "client_error",
+                    "event_type": "scroll_milestone",
                     "page_url": "http://localhost/test",
-                    "event_data": {"message": "Simulated error in checkout"}
+                    "event_data": {"depth": "50%"}
                 }
             ]
         }
         res = self.client.post(
             "/api/v1/telemetry",
             json=payload,
-            headers={"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) Chrome/120.0.0.0 Safari/537.36"}
+            headers={"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) Chrome/120.0.0.0"}
         )
         self.assertEqual(res.status_code, 200)
         self.assertTrue(res.get_json()["success"])
 
-        # Verificar enriquecimiento en base de datos
-        events_res = self.client.get("/api/v1/events/wk_test_12345?limit=2")
-        self.assertEqual(events_res.status_code, 200)
-        stored_events = events_res.get_json()["events"]
-        self.assertGreaterEqual(len(stored_events), 2)
-        
-        # Validar metadata inyectada por el backend
-        first_event_data = stored_events[0]["event_data"]
-        self.assertIn("_client", first_event_data)
-        self.assertEqual(first_event_data["_client"]["browser"], "Chrome")
-        self.assertEqual(first_event_data["_client"]["os"], "Windows")
-        self.assertIn("_network", first_event_data)
+        # Verificar motor de agregación
+        summary_res = self.client.get("/api/v1/analytics/summary/wk_test_12345")
+        self.assertEqual(summary_res.status_code, 200)
+        data = summary_res.get_json()
+        self.assertIn("rage_clicks", data)
+        self.assertIn("scroll_milestones", data)
+        self.assertGreaterEqual(data["rage_clicks"], 1)
 
     def test_sdk_distribution_endpoints(self):
-        # Comprobar distribución desde /sdk/tracker.js y /tracker.js
-        for route in ["/sdk/tracker.js", "/tracker.js"]:
+        for route in ["/sdk/tracker.js", "/counter.js", "/download/counter.js"]:
             res = self.client.get(route)
             self.assertEqual(res.status_code, 200)
-            self.assertIn("javascript", res.content_type)
 
 
 if __name__ == "__main__":

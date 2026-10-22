@@ -1,6 +1,6 @@
 """
 backend/controllers/telemetry_controller.py
-Controlador de ingesta unificada de telemetría, rate limiting y enriquecimiento.
+Controlador de ingesta de telemetría y consultas analíticas agregadas.
 Gobernanza: Límite estricto < 150 líneas.
 """
 import json
@@ -10,6 +10,7 @@ from database.repositories.event_repository import EventRepository
 from backend.enrichment.user_agent_parser import ua_parser
 from backend.enrichment.geo_ip_enricher import geo_enricher
 from backend.core.rate_limiter import rate_limiter
+from backend.analytics.analytics_engine import analytics_engine
 
 telemetry_bp = Blueprint("telemetry", __name__, url_prefix="/api/v1")
 _site_repo = SiteRepository()
@@ -31,7 +32,6 @@ def _get_payload() -> dict:
 def receive_telemetry() -> tuple[Response, int]:
     client_ip = geo_enricher.extract_ip(dict(request.headers), request.remote_addr)
 
-    # Protección de seguridad contra inundación (Rate Limiting)
     if not rate_limiter.is_allowed(client_ip):
         return jsonify({"success": False, "error": "Límite de tasa excedido. Intenta más tarde."}), 429
 
@@ -56,6 +56,13 @@ def receive_telemetry() -> tuple[Response, int]:
 
     stored = _event_repo.save_batch(site_key, raw_events)
     return jsonify({"success": True, "stored": stored}), 200
+
+
+@telemetry_bp.route("/analytics/summary/<string:site_key>", methods=["GET"])
+def get_analytics_summary(site_key: str) -> tuple[Response, int]:
+    """Retorna métricas agregadas de negocio calculadas por el motor analítico."""
+    summary = analytics_engine.get_summary(site_key)
+    return jsonify(summary), 200
 
 
 @telemetry_bp.route("/stats/<string:site_key>", methods=["GET"])

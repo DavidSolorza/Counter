@@ -1,5 +1,5 @@
 /**
- * Counter Analytics Enterprise SDK (v2.2.0 - PII Sanitizer & Total Failsafe)
+ * Counter Analytics Enterprise SDK (v3.0.0 - Passive Telemetry & Friction Shield)
  * Gobernanza: Límite estricto < 150 líneas.
  */
 (function () {
@@ -11,99 +11,90 @@
         if (!key) return;
 
         const isDebug = tag.getAttribute('data-debug') === 'true';
-        const API_BASE = tag.getAttribute('data-api-base') || 'http://127.0.0.1:5000/api/v1';
+        const API = tag.getAttribute('data-api-base') || 'http://127.0.0.1:5000/api/v1';
+        const log = (m, d) => { if (isDebug) console.log("%c[Counter] " + m, "color: #22c55e; font-weight: bold;", d || ""); };
 
-        function log(msg, d) {
-            if (isDebug) console.log("%c[Counter] " + msg, "color: #22c55e; font-weight: bold;", d || "");
-        }
+        // Sesión efímera y atribución UTM
+        let sid = sessionStorage.getItem('__cntr_sid');
+        if (!sid) { sid = Math.random().toString(36).slice(2, 9) + Date.now().toString(36); sessionStorage.setItem('__cntr_sid', sid); }
+        const p = new URLSearchParams(window.location.search);
+        const utm = { src: p.get('utm_source'), med: p.get('utm_medium'), camp: p.get('utm_campaign'), ref: document.referrer || null };
 
-        // Sanitización de Información Personalmente Identificable (PII)
-        function isSensitive(el) {
+        function isPii(el) {
             if (!el) return false;
-            const type = (el.type || '').toLowerCase();
-            const tagN = (el.tagName || '').toLowerCase();
-            const name = (el.name || el.id || '').toLowerCase();
-            if (type === 'password' || el.hasAttribute('data-private')) return true;
-            return /password|passwd|card|cc-num|cvv|cvc|token|ssn|secret/i.test(name);
+            const t = (el.type || '').toLowerCase(), n = (el.name || el.id || '').toLowerCase();
+            return t === 'password' || el.hasAttribute('data-private') || /password|card|cvv|token|secret/i.test(n);
         }
 
-        fetch(API_BASE + '/verify', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ site_key: key })
-        })
-        .then(r => r.json())
-        .then(function(res) {
-            if (!res.valid) return;
-            log("Desbloqueado para dominio:", res.domain);
-            boot(key, API_BASE);
-        })
-        .catch(() => {});
+        fetch(API + '/verify', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ site_key: key }) })
+            .then(r => r.json()).then(res => { if (res.valid) boot(key, API); }).catch(() => {});
 
         function boot(siteKey, apiBase) {
-            const buffer = [];
-            let startTime = Date.now(), dwellMs = 0, isVis = document.visibilityState === 'visible';
-            let timer = null;
+            const buf = [];
+            let tStart = Date.now(), dwell = 0, isVis = document.visibilityState === 'visible', debTimer = null;
+            const recentClicks = [];
+            const milestones = { '25%': false, '50%': false, '75%': false, '100%': false };
 
             function emit(t, d, imm) {
                 try {
-                    buffer.push({ event_type: t, page_url: window.location.href, event_data: d || {} });
-                    log("Capturado (" + t + "):", d);
-                    if (imm) flush(); else { clearTimeout(timer); timer = setTimeout(flush, 1200); }
+                    const data = Object.assign({ _sid: sid }, d);
+                    buf.push({ event_type: t, page_url: window.location.href, event_data: data });
+                    log("Capturado (" + t + "):", data);
+                    if (imm) flush(); else { clearTimeout(debTimer); debTimer = setTimeout(flush, 1200); }
                 } catch(e) {}
             }
 
             function flush() {
                 try {
-                    if (buffer.length === 0) return;
-                    const batch = buffer.splice(0, buffer.length);
-                    const payload = JSON.stringify({ site_key: siteKey, events: batch });
+                    if (buf.length === 0) return;
+                    const batch = buf.splice(0, buf.length), payload = JSON.stringify({ site_key: siteKey, events: batch });
                     const ep = apiBase + '/telemetry';
                     if (navigator.sendBeacon && document.visibilityState === 'hidden') {
                         navigator.sendBeacon(ep, new Blob([payload], { type: 'text/plain' }));
                     } else {
-                        fetch(ep, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: payload, keepalive: true })
-                            .then(r => r.json()).then(d => log("Sincronizado (" + d.stored + " eventos)"))
-                            .catch(() => {});
+                        fetch(ep, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: payload, keepalive: true }).catch(() => {});
                     }
                 } catch(e) {}
             }
 
             setInterval(flush, 4000);
 
-            document.addEventListener('visibilitychange', function() {
-                if (document.visibilityState === 'visible') { startTime = Date.now(); isVis = true; }
-                else { if (isVis) dwellMs += Date.now() - startTime; isVis = false; flush(); }
-            });
-            window.addEventListener('beforeunload', function() {
-                const total = isVis ? dwellMs + (Date.now() - startTime) : dwellMs;
-                buffer.push({ event_type: 'page_dwell', page_url: window.location.href, event_data: { active_dwell_ms: total } });
-                flush();
-            });
+            // Scroll pasivo ultra-optimizado (Compositor 60 FPS)
+            window.addEventListener('scroll', function() {
+                const max = document.documentElement.scrollHeight - window.innerHeight;
+                if (max <= 0) return;
+                const pct = Math.round((window.scrollY / max) * 100);
+                ['25%', '50%', '75%', '100%'].forEach(m => {
+                    const threshold = parseInt(m);
+                    if (pct >= threshold && !milestones[m]) { milestones[m] = true; emit('scroll_milestone', { depth: m }); }
+                });
+            }, { passive: true });
 
-            window.addEventListener('load', function() {
-                setTimeout(function() {
-                    const nav = performance.getEntriesByType ? performance.getEntriesByType('navigation')[0] : null;
-                    emit('web_vitals', {
-                        ttfb_ms: nav ? Math.round(nav.responseStart - nav.requestStart) : 0,
-                        load_time_ms: nav ? Math.round(nav.loadEventEnd - nav.startTime) : 0
-                    }, false);
-                }, 100);
-            });
-
-            window.addEventListener('error', function(e) {
-                emit('client_error', { message: e.message, file: e.filename, line: e.lineno }, true);
-            });
-
+            // Clics y Detección de Fricción (Rage Clicks)
             document.addEventListener('click', function(e) {
-                const el = e.target;
+                const el = e.target, now = Date.now();
                 const id = el.tagName + (el.id ? '#' + el.id : '') + (el.className ? '.' + String(el.className).split(' ')[0] : '');
-                const rawText = (el.innerText || '').slice(0, 35).trim();
-                const safeText = isSensitive(el) ? '[REDACTED_PII]' : rawText;
-                emit('click', { element: id, text: safeText, dataset: Object.assign({}, el.dataset) });
+                recentClicks.push({ id: id, time: now });
+                if (recentClicks.length > 4) recentClicks.shift();
+
+                const isRage = recentClicks.length >= 3 && (now - recentClicks[0].time < 800) && recentClicks.every(c => c.id === id);
+                const text = isPii(el) ? '[REDACTED_PII]' : (el.innerText || '').slice(0, 35).trim();
+
+                if (isRage) emit('rage_click', { element: id, text: text, clicks: recentClicks.length }, true);
+                else emit('click', { element: id, text: text });
             }, true);
 
-            window.WolfAnalytics = window.Counter = { track: (t, d, imm) => emit(t, d, imm), flush: flush };
+            // Ciclo de vida y Web Vitals
+            window.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible') { tStart = Date.now(); isVis = true; } else { if (isVis) dwell += Date.now() - tStart; isVis = false; flush(); } });
+            window.addEventListener('beforeunload', () => { emit('page_dwell', { active_dwell_ms: isVis ? dwell + (Date.now() - tStart) : dwell }); flush(); });
+            window.addEventListener('load', () => setTimeout(() => {
+                const n = performance.getEntriesByType ? performance.getEntriesByType('navigation')[0] : null;
+                const conn = navigator.connection || {};
+                emit('web_vitals', { ttfb_ms: n ? Math.round(n.responseStart - n.requestStart) : 0, load_ms: n ? Math.round(n.loadEventEnd - n.startTime) : 0, net: conn.effectiveType || 'wifi', utm: utm }, false);
+            }, 100));
+
+            window.addEventListener('error', e => emit('client_error', { message: e.message, file: e.filename, line: e.lineno }, true));
+            window.Counter = window.WolfAnalytics = { track: (t, d, imm) => emit(t, d, imm), flush: flush };
         }
-    } catch (globalErr) {}
+    } catch (e) {}
 })();

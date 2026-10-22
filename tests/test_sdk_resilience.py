@@ -51,7 +51,7 @@ class CounterResilienceTestCase(unittest.TestCase):
         """La ruta /dashboard y la raíz deben entregar el portal HTML de Counter."""
         res = self.client.get("/dashboard")
         self.assertEqual(res.status_code, 200)
-        self.assertIn("Counter - Enterprise Analytics Platform", res.get_data(as_text=True))
+        self.assertIn("Counter Intelligence Platform", res.get_data(as_text=True))
 
 
 if __name__ == "__main__":
