@@ -49,7 +49,7 @@ def create_app() -> Flask:
 
 if __name__ == "__main__":
     application = create_app()
-    print(f"🚀 WolfAnalytics levantado en http://{settings.HOST}:{settings.PORT}")
-    print(f"📊 Panel de prueba en: http://{settings.HOST}:{settings.PORT}/test")
-    print(f"📦 SDK disponible en: http://{settings.HOST}:{settings.PORT}/tracker.js")
+    print(f"[WolfAnalytics] Servidor activo en http://{settings.HOST}:{settings.PORT}")
+    print(f"[WolfAnalytics] Panel de prueba: http://{settings.HOST}:{settings.PORT}/test")
+    print(f"[WolfAnalytics] SDK disponible: http://{settings.HOST}:{settings.PORT}/tracker.js")
     application.run(host=settings.HOST, port=settings.PORT, debug=settings.DEBUG)
