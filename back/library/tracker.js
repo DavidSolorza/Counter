@@ -10,9 +10,17 @@
         const key = tag.getAttribute('data-site-key');
         if (!key) return;
 
+        let srcUrl;
+        try { srcUrl = new URL(tag.src, window.location.href); } catch(e) { srcUrl = window.location; }
+        const isSec = window.location.protocol === 'https:' || srcUrl.protocol === 'https:';
+        const proto = isSec ? 'https:' : 'http:';
+        const hostName = srcUrl.hostname || window.location.hostname || 'localhost';
+        const secPort = srcUrl.port === '5000' ? ':8080' : (srcUrl.port ? ':' + srcUrl.port : ':8080');
+        const telPort = srcUrl.port ? ':' + srcUrl.port : ':5000';
+
         const isDebug = tag.getAttribute('data-debug') === 'true';
-        const SEC_API = tag.getAttribute('data-security-api') || 'http://localhost:8080/api/v1/security';
-        const TEL_API = tag.getAttribute('data-telemetry-api') || 'http://localhost:5000/api/v1/telemetry/collect';
+        const SEC_API = tag.getAttribute('data-security-api') || (proto + '//' + hostName + secPort + '/api/v1/security');
+        const TEL_API = tag.getAttribute('data-telemetry-api') || (proto + '//' + hostName + telPort + '/api/v1/telemetry/collect');
         const log = (m, d) => { if (isDebug) console.log("%c[Counter] " + m, "color: #2563eb; font-weight: bold;", d || ""); };
 
         let sid = sessionStorage.getItem('__cntr_sid');
@@ -106,6 +114,8 @@
             window.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible') { tStart = Date.now(); isVis = true; } else { if (isVis) dwell += Date.now() - tStart; isVis = false; flush(); } });
             window.addEventListener('beforeunload', () => { emit('page_dwell', { active_dwell_ms: isVis ? dwell + (Date.now() - tStart) : dwell }); flush(); });
             window.addEventListener('error', e => emit('client_error', { message: e.message, file: e.filename, line: e.lineno }, true));
+            window.addEventListener('popstate', () => emit('page_view', { path: window.location.pathname, title: document.title }));
+            emit('page_view', { path: window.location.pathname, title: document.title, utm: utm });
             window.Counter = { track: (t, d, imm) => emit(t, d, imm), flush: flush };
         }
     } catch(e) {}
