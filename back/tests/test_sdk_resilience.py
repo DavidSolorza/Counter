@@ -1,18 +1,18 @@
 """
-tests/test_sdk_resilience.py
+back/tests/test_sdk_resilience.py
 Pruebas de seguridad, resiliencia y rate limiting para la plataforma Counter.
 Gobernanza: Límite estricto < 150 líneas.
 """
 import sys
 from pathlib import Path
 
-BASE_DIR = Path(__file__).resolve().parent.parent
+BASE_DIR = Path(__file__).resolve().parent.parent.parent
 if str(BASE_DIR) not in sys.path:
     sys.path.insert(0, str(BASE_DIR))
 
 import unittest
-from backend.app import create_app
-from backend.core.rate_limiter import rate_limiter
+from back.app import create_app
+from back.logic.core.rate_limiter import rate_limiter
 
 
 class CounterResilienceTestCase(unittest.TestCase):
@@ -47,11 +47,12 @@ class CounterResilienceTestCase(unittest.TestCase):
         self.assertEqual(dl_res.status_code, 200)
         self.assertIn("attachment", dl_res.headers.get("Content-Disposition", ""))
 
-    def test_dashboard_route(self):
-        """La ruta /dashboard y la raíz deben entregar el portal HTML de Counter."""
-        res = self.client.get("/dashboard")
+    def test_api_status_route(self):
+        """La ruta raíz de la API debe responder con el estado del servicio."""
+        res = self.client.get("/")
         self.assertEqual(res.status_code, 200)
-        self.assertIn("Counter Intelligence Platform", res.get_data(as_text=True))
+        data = res.get_json()
+        self.assertEqual(data.get("status"), "online")
 
 
 if __name__ == "__main__":

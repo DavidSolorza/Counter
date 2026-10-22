@@ -1,11 +1,14 @@
 """
-database/repositories/event_repository.py
+back/logic/database/repositories/event_repository.py
 Persistencia y consulta de eventos de telemetría con payloads JSON.
 Gobernanza: Límite estricto < 150 líneas.
 """
 from typing import List, Dict, Any
 import json
-from database.connection import db, DatabaseManager
+try:
+    from back.logic.database.connection import db, DatabaseManager
+except ImportError:
+    from database.connection import db, DatabaseManager
 
 
 class EventRepository:
@@ -72,3 +75,6 @@ class EventRepository:
                     "created_at": r["created_at"]
                 })
             return output
+
+    def find_recent_by_site(self, site_key: str, limit: int = 10) -> List[Dict[str, Any]]:
+        return self.get_recent(site_key, limit)

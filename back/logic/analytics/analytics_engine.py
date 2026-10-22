@@ -1,11 +1,14 @@
 """
-backend/analytics/analytics_engine.py
+back/logic/analytics/analytics_engine.py
 Motor de agregación e inteligencia analítica sobre eventos SQLite.
 Gobernanza: Límite estricto < 150 líneas.
 """
 from typing import Dict, Any, List
 import json
-from database.connection import db, DatabaseManager
+try:
+    from back.logic.database.connection import db, DatabaseManager
+except ImportError:
+    from database.connection import db, DatabaseManager
 
 
 class AnalyticsEngine:
@@ -18,7 +21,7 @@ class AnalyticsEngine:
         with self._manager.session() as conn:
             c = conn.cursor()
 
-            # 1. Conteo total y sesiones únicas
+            # 1. Conteo total
             c.execute("SELECT COUNT(*) AS total FROM telemetry_events WHERE site_key = ?;", (site_key,))
             total_events = c.fetchone()["total"]
 

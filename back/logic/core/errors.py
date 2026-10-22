@@ -1,6 +1,6 @@
 """
-backend/core/errors.py
-Excepciones tipadas para el backend WolfAnalytics.
+back/logic/core/errors.py
+Excepciones tipadas para el backend Counter.
 Gobernanza: Límite estricto < 150 líneas.
 """
 

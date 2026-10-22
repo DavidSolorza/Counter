@@ -1,11 +1,15 @@
 """
-backend/controllers/licensing_controller.py
+back/logic/controllers/licensing_controller.py
 Controlador para el endpoint de Handshake y verificación de llaves.
 Gobernanza: Límite estricto < 150 líneas.
 """
 from flask import Blueprint, request, jsonify, Response
-from database.repositories.site_repository import SiteRepository
-from backend.core.errors import AppException
+try:
+    from back.logic.database.repositories.site_repository import SiteRepository
+    from back.logic.core.errors import AppException
+except ImportError:
+    from database.repositories.site_repository import SiteRepository
+    from backend.core.errors import AppException
 
 licensing_bp = Blueprint("licensing", __name__, url_prefix="/api/v1")
 _site_repo = SiteRepository()

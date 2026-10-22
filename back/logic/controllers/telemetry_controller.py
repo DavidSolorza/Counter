@@ -1,16 +1,24 @@
 """
-backend/controllers/telemetry_controller.py
+back/logic/controllers/telemetry_controller.py
 Controlador de ingesta de telemetría y consultas analíticas agregadas.
 Gobernanza: Límite estricto < 150 líneas.
 """
 import json
 from flask import Blueprint, request, jsonify, Response
-from database.repositories.site_repository import SiteRepository
-from database.repositories.event_repository import EventRepository
-from backend.enrichment.user_agent_parser import ua_parser
-from backend.enrichment.geo_ip_enricher import geo_enricher
-from backend.core.rate_limiter import rate_limiter
-from backend.analytics.analytics_engine import analytics_engine
+try:
+    from back.logic.database.repositories.site_repository import SiteRepository
+    from back.logic.database.repositories.event_repository import EventRepository
+    from back.logic.enrichment.user_agent_parser import ua_parser
+    from back.logic.enrichment.geo_ip_enricher import geo_enricher
+    from back.logic.core.rate_limiter import rate_limiter
+    from back.logic.analytics.analytics_engine import analytics_engine
+except ImportError:
+    from database.repositories.site_repository import SiteRepository
+    from database.repositories.event_repository import EventRepository
+    from backend.enrichment.user_agent_parser import ua_parser
+    from backend.enrichment.geo_ip_enricher import geo_enricher
+    from backend.core.rate_limiter import rate_limiter
+    from backend.analytics.analytics_engine import analytics_engine
 
 telemetry_bp = Blueprint("telemetry", __name__, url_prefix="/api/v1")
 _site_repo = SiteRepository()
@@ -60,7 +68,6 @@ def receive_telemetry() -> tuple[Response, int]:
 
 @telemetry_bp.route("/analytics/summary/<string:site_key>", methods=["GET"])
 def get_analytics_summary(site_key: str) -> tuple[Response, int]:
-    """Retorna métricas agregadas de negocio calculadas por el motor analítico."""
     summary = analytics_engine.get_summary(site_key)
     return jsonify(summary), 200
 

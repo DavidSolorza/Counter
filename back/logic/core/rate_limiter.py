@@ -1,5 +1,5 @@
 """
-backend/core/rate_limiter.py
+back/logic/core/rate_limiter.py
 Limitador de tasa en memoria (Sliding Window) para protección contra spam y DoS.
 Gobernanza: Límite estricto < 150 líneas.
 """
@@ -20,7 +20,6 @@ class MemoryRateLimiter:
         if identifier not in self._requests:
             self._requests[identifier] = []
 
-        # Limpiar marcas de tiempo expiradas
         self._requests[identifier] = [t for t in self._requests[identifier] if t > cutoff]
 
         if len(self._requests[identifier]) >= max_requests:
