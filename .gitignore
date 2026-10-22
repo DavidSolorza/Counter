@@ -2,6 +2,12 @@
 # Counter Backend - Git Ignore Rules
 # ==========================================
 
+# Java & Maven
+target/
+*.class
+*.jar
+*.war
+
 # Python & Entornos Virtuales
 __pycache__/
 *.py[cod]

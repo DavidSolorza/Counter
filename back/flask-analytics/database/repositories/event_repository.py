@@ -1,26 +1,24 @@
 """
-back/logic/database/repositories/event_repository.py
-Persistencia y consulta de eventos de telemetría con payloads JSON.
+back/flask-analytics/database/repositories/event_repository.py
+Persistencia y consulta de telemetría en analytics.db.
 Gobernanza: Límite estricto < 150 líneas.
 """
 from typing import List, Dict, Any
 import json
+
 try:
-    from back.logic.database.connection import db, DatabaseManager
+    from database.connection import db, AnalyticsDatabaseManager
 except ImportError:
-    from database.connection import db, DatabaseManager
+    from ..connection import db, AnalyticsDatabaseManager
 
 
 class EventRepository:
-    """Manejo de persistencia de telemetría con columna JSON."""
-
-    def __init__(self, manager: DatabaseManager = db) -> None:
+    def __init__(self, manager: AnalyticsDatabaseManager = db) -> None:
         self._manager = manager
 
     def save_batch(self, site_key: str, events: List[Dict[str, Any]]) -> int:
         if not events:
             return 0
-
         query = """
             INSERT INTO telemetry_events (site_key, event_type, page_url, event_data)
             VALUES (?, ?, ?, ?);
@@ -34,7 +32,6 @@ class EventRepository:
             )
             for ev in events
         ]
-
         with self._manager.session() as conn:
             cursor = conn.cursor()
             cursor.executemany(query, records)
@@ -59,9 +56,8 @@ class EventRepository:
         with self._manager.session() as conn:
             cursor = conn.cursor()
             cursor.execute(query, (site_key, limit))
-            rows = cursor.fetchall()
             output = []
-            for r in rows:
+            for r in cursor.fetchall():
                 try:
                     pdata = json.loads(r["event_data"]) if r["event_data"] else {}
                 except Exception:
@@ -75,6 +71,3 @@ class EventRepository:
                     "created_at": r["created_at"]
                 })
             return output
-
-    def find_recent_by_site(self, site_key: str, limit: int = 10) -> List[Dict[str, Any]]:
-        return self.get_recent(site_key, limit)

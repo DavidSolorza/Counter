@@ -1,27 +1,25 @@
 """
-back/logic/analytics/analytics_engine.py
-Motor de agregación e inteligencia analítica sobre eventos SQLite.
+back/flask-analytics/analytics/analytics_engine.py
+Motor analítico para el cálculo de métricas agregadas en analytics.db.
 Gobernanza: Límite estricto < 150 líneas.
 """
 from typing import Dict, Any, List
-import json
+
 try:
-    from back.logic.database.connection import db, DatabaseManager
+    from database.connection import db, AnalyticsDatabaseManager
 except ImportError:
-    from database.connection import db, DatabaseManager
+    from ..database.connection import db, AnalyticsDatabaseManager
 
 
 class AnalyticsEngine:
-    """Calcula métricas agregadas de comportamiento, fricción y embudos."""
-
-    def __init__(self, manager: DatabaseManager = db) -> None:
+    def __init__(self, manager: AnalyticsDatabaseManager = db) -> None:
         self._manager = manager
 
     def get_summary(self, site_key: str) -> Dict[str, Any]:
         with self._manager.session() as conn:
             c = conn.cursor()
 
-            # 1. Conteo total
+            # 1. Conteo total de eventos
             c.execute("SELECT COUNT(*) AS total FROM telemetry_events WHERE site_key = ?;", (site_key,))
             total_events = c.fetchone()["total"]
 
@@ -45,7 +43,7 @@ class AnalyticsEngine:
             """, (site_key,))
             top_pages = [{"url": r["page_url"], "views": r["count"]} for r in c.fetchall()]
 
-            # 4. Top elementos clickeados (usando json_extract nativo de SQLite)
+            # 4. Top elementos clickeados (json_extract nativo)
             c.execute("""
                 SELECT json_extract(event_data, '$.element') AS element, COUNT(*) AS clicks
                 FROM telemetry_events

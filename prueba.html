@@ -62,6 +62,12 @@
                 .catch(e => log("Error: " + e));
         }
     </script>
-    <script src="http://127.0.0.1:5000/sdk/tracker.js" data-site-key="wk_test_12345" async></script>
+    <!-- SDK Dual: Handshake en Spring Boot (8080) + Telemetría en Flask (5000) -->
+    <script src="http://127.0.0.1:5000/counter.js"
+            data-site-key="wk_test_12345"
+            data-security-api="http://localhost:8080/api/v1/security"
+            data-telemetry-api="http://localhost:5000/api/v1/telemetry/collect"
+            data-debug="true"
+            async></script>
 </body>
 </html>
