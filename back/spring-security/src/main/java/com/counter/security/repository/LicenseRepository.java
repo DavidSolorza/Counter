@@ -14,5 +14,7 @@ public interface LicenseRepository extends JpaRepository<ClientLicense, Long> {
 
     Optional<ClientLicense> findBySiteKey(String siteKey);
 
+    Optional<ClientLicense> findFirstByClientNameIgnoreCase(String clientName);
+
     boolean existsBySiteKey(String siteKey);
 }

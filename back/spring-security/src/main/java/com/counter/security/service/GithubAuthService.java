@@ -84,12 +84,13 @@ public class GithubAuthService {
     }
 
     private ClientLicense resolveLicenseForUser(String username) {
-        Optional<ClientLicense> existing = licenseRepository.findBySiteKey("wk_live_demo");
+        Optional<ClientLicense> existing = licenseRepository.findFirstByClientNameIgnoreCase(username);
         if (existing.isPresent()) {
             return existing.get();
         }
 
-        String newKey = securityService.generateSiteKey("wk_live_");
+        String safeName = username.toLowerCase().replaceAll("[^a-z0-9]", "");
+        String newKey = securityService.generateSiteKey("cntr_" + safeName + "_");
         ClientLicense created = new ClientLicense(username, newKey, "*", 1);
         return licenseRepository.save(created);
     }
