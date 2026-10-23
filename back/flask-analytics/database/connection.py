@@ -1,32 +1,62 @@
 """
 back/flask-analytics/database/connection.py
-Conexión SQLite nativa para el microservicio de analítica.
+Conexión PostgreSQL (con pool de conexiones) para el microservicio de analítica.
 Gobernanza: Límite estricto < 150 líneas.
 """
-from typing import ContextManager
+from typing import ContextManager, Any
 from contextlib import contextmanager
-from pathlib import Path
-import sqlite3
-import os
+import psycopg2
+from psycopg2.extras import RealDictCursor
+from psycopg2.pool import ThreadedConnectionPool
 
-DB_PATH = Path(__file__).resolve().parent.parent / "analytics.db"
-SCHEMAS_DIR = Path(__file__).resolve().parent / "schemas"
+try:
+    from core.config import config
+except ImportError:
+    from ..core.config import config
 
 
 class AnalyticsDatabaseManager:
-    def __init__(self, db_path: str = str(DB_PATH)) -> None:
-        self._db_path = db_path
+    def __init__(self, dsn: str = config.DATABASE_URL) -> None:
+        self._dsn = dsn
+        self._pool: ThreadedConnectionPool | None = None
 
-    def get_connection(self) -> sqlite3.Connection:
-        # Modo WAL y timeout para soportar alta concurrencia sin bloqueos
-        conn = sqlite3.connect(self._db_path, timeout=30.0)
-        conn.execute("PRAGMA journal_mode = WAL;")
-        conn.execute("PRAGMA synchronous = NORMAL;")
-        conn.row_factory = sqlite3.Row
-        return conn
+    def _get_pool(self) -> ThreadedConnectionPool | None:
+        if self._pool is None:
+            try:
+                self._pool = ThreadedConnectionPool(
+                    minconn=1,
+                    maxconn=20,
+                    dsn=self._dsn,
+                    cursor_factory=RealDictCursor
+                )
+            except Exception as e:
+                print(f"[Counter PG Pool Error]: {e}")
+                self._pool = None
+        return self._pool
+
+    def get_connection(self) -> Any:
+        pool = self._get_pool()
+        if pool is not None:
+            return pool.getconn()
+        return psycopg2.connect(self._dsn, cursor_factory=RealDictCursor)
+
+    def release_connection(self, conn: Any) -> None:
+        if conn is None:
+            return
+        pool = self._get_pool()
+        if pool is not None:
+            try:
+                pool.putconn(conn)
+                return
+            except Exception:
+                pass
+        try:
+            conn.close()
+        except Exception:
+            pass
 
     @contextmanager
-    def session(self) -> ContextManager[sqlite3.Connection]:
+    def session(self) -> ContextManager[Any]:
         conn = self.get_connection()
         try:
             yield conn
@@ -35,15 +65,21 @@ class AnalyticsDatabaseManager:
             conn.rollback()
             raise
         finally:
-            conn.close()
+            self.release_connection(conn)
 
     def initialize_schema(self) -> None:
-        schema_file = SCHEMAS_DIR / "001_analytics_schema.sql"
-        if schema_file.exists():
-            with open(schema_file, "r", encoding="utf-8") as f:
-                script = f.read()
+        """Verifica conectividad con PostgreSQL y asegura función auxiliar json_extract."""
+        try:
             with self.session() as conn:
-                conn.executescript(script)
+                with conn.cursor() as cur:
+                    cur.execute("""
+                        CREATE OR REPLACE FUNCTION json_extract(data jsonb, path text)
+                        RETURNS text LANGUAGE sql IMMUTABLE AS $$
+                            SELECT jsonb_extract_path_text(data, VARIADIC string_to_array(regexp_replace(path, '^\\$\\.?', ''), '.'));
+                        $$;
+                    """)
+        except Exception as e:
+            print(f"[Counter DB Init Warning]: {e}")
 
 
 db = AnalyticsDatabaseManager()

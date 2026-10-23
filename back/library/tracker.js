@@ -15,12 +15,17 @@
         const isSec = window.location.protocol === 'https:' || srcUrl.protocol === 'https:';
         const proto = isSec ? 'https:' : 'http:';
         const hostName = srcUrl.hostname || window.location.hostname || 'localhost';
-        const secPort = srcUrl.port === '5000' ? ':8080' : (srcUrl.port ? ':' + srcUrl.port : ':8080');
-        const telPort = srcUrl.port ? ':' + srcUrl.port : ':5000';
+        const isProdDomain = hostName.endsWith('servidor.blog');
+        const secBase = isProdDomain
+            ? 'https://counter-auth.servidor.blog'
+            : (proto + '//' + hostName + (srcUrl.port === '5000' ? ':8080' : (srcUrl.port === '5001' ? ':8081' : (srcUrl.port ? ':' + srcUrl.port : ':8080'))));
+        const telBase = isProdDomain
+            ? ('https://' + hostName)
+            : (proto + '//' + hostName + (srcUrl.port ? ':' + srcUrl.port : ':5000'));
 
         const isDebug = tag.getAttribute('data-debug') === 'true';
-        const SEC_API = tag.getAttribute('data-security-api') || (proto + '//' + hostName + secPort + '/api/v1/security');
-        const TEL_API = tag.getAttribute('data-telemetry-api') || (proto + '//' + hostName + telPort + '/api/v1/telemetry/collect');
+        const SEC_API = tag.getAttribute('data-security-api') || (secBase + '/api/v1/security');
+        const TEL_API = tag.getAttribute('data-telemetry-api') || (telBase + '/api/v1/telemetry/collect');
         const log = (m, d) => { if (isDebug) console.log("%c[Counter] " + m, "color: #2563eb; font-weight: bold;", d || ""); };
 
         let sid = sessionStorage.getItem('__cntr_sid');

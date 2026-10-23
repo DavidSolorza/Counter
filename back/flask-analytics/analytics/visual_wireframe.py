@@ -24,7 +24,7 @@ class VisualWireframeProcessor:
             c.execute("""
                 SELECT COUNT(*) AS total_clicks
                 FROM telemetry_events
-                WHERE site_key = ? AND event_type IN ('click', 'rage_click');
+                WHERE site_key = %s AND event_type IN ('click', 'rage_click');
             """, (site_key,))
             tot = c.fetchone()["total_clicks"] or 1
 
@@ -33,19 +33,19 @@ class VisualWireframeProcessor:
                 SELECT 
                     json_extract(event_data, '$.element') AS element,
                     json_extract(event_data, '$.text') AS text,
-                    json_extract(event_data, '$.visual.type') AS visual_type,
+                    MAX(json_extract(event_data, '$.visual.type')) AS visual_type,
                     json_extract(event_data, '$.visual.bg') AS bg,
-                    json_extract(event_data, '$.visual.color') AS color,
-                    json_extract(event_data, '$.visual.radius') AS radius,
+                    MAX(json_extract(event_data, '$.visual.color')) AS color,
+                    MAX(json_extract(event_data, '$.visual.radius')) AS radius,
                     COUNT(*) AS clicks
                 FROM telemetry_events
-                WHERE site_key = ? 
+                WHERE site_key = %s 
                   AND event_type IN ('click', 'rage_click')
                   AND json_extract(event_data, '$.text') IS NOT NULL
                   AND json_extract(event_data, '$.text') != ''
                 GROUP BY text, element, bg
                 ORDER BY clicks DESC
-                LIMIT ?;
+                LIMIT %s;
             """, (site_key, limit))
 
             components = []

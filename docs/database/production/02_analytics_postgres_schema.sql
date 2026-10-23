@@ -6,6 +6,12 @@
 -- Gobernanza: Límite estricto < 150 líneas
 -- =============================================================================
 
+-- Función de compatibilidad para extracción de rutas JSON (ej. '$.element' o '$._client.browser')
+CREATE OR REPLACE FUNCTION json_extract(data jsonb, path text)
+RETURNS text LANGUAGE sql IMMUTABLE AS $$
+    SELECT jsonb_extract_path_text(data, VARIADIC string_to_array(regexp_replace(path, '^\$\.?', ''), '.'));
+$$;
+
 -- 1. Tabla de Eventos de Telemetría (Ingesta Masiva de Eventos)
 CREATE TABLE IF NOT EXISTS telemetry_events (
     id BIGSERIAL PRIMARY KEY,

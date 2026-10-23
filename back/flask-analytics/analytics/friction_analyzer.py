@@ -24,11 +24,11 @@ class FrictionAnalyzer:
                 SELECT 
                     json_extract(event_data, '$.element') AS element,
                     json_extract(event_data, '$.text') AS text,
-                    MAX(json_extract(event_data, '$.clicks')) AS max_clicks,
+                    MAX(CAST(NULLIF(json_extract(event_data, '$.clicks'), '') AS INTEGER)) AS max_clicks,
                     COUNT(*) AS occurrences,
-                    json_extract(event_data, '$.visual') AS visual
+                    MAX(json_extract(event_data, '$.visual')) AS visual
                 FROM telemetry_events
-                WHERE site_key = ? AND event_type = 'rage_click'
+                WHERE site_key = %s AND event_type = 'rage_click'
                 GROUP BY element, text
                 ORDER BY occurrences DESC
                 LIMIT 10;
@@ -52,19 +52,20 @@ class FrictionAnalyzer:
                     COUNT(*) AS count,
                     MAX(created_at) AS last_seen
                 FROM telemetry_events
-                WHERE site_key = ? AND event_type IN ('client_error', 'promise_rejection')
+                WHERE site_key = %s AND event_type IN ('client_error', 'promise_rejection')
                 GROUP BY message, file, line
                 ORDER BY count DESC
                 LIMIT 10;
             """, (site_key,))
             error_items = []
             for r in c.fetchall():
+                ls = r["last_seen"]
                 error_items.append({
                     "message": r["message"] or "Error no especificado",
                     "file": r["file"] or "",
                     "line": r["line"] or 0,
                     "occurrences": r["count"],
-                    "last_seen": r["last_seen"]
+                    "last_seen": ls.isoformat() if hasattr(ls, "isoformat") else str(ls or "")
                 })
 
             # 3. Cálculo de Friction Score (0-100)

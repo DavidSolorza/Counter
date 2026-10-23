@@ -1,16 +1,21 @@
 server:
-  port: 8080
+  port: ${PORT:8080}
 
 spring:
   application:
     name: counter-security
   datasource:
-    url: jdbc:sqlite:security.db
-    driver-class-name: org.sqlite.JDBC
+    url: ${SPRING_DATASOURCE_URL:jdbc:postgresql://${DB_HOST:mi-servidor-db}:${DB_PORT:5432}/${DB_NAME:counter_db}}
+    username: ${SPRING_DATASOURCE_USERNAME:${DB_USER:mi_usuario}}
+    password: ${SPRING_DATASOURCE_PASSWORD:${DB_PASSWORD:mi_password}}
+    driver-class-name: org.postgresql.Driver
+  sql:
+    init:
+      mode: never
   jpa:
-    database-platform: org.hibernate.community.dialect.SQLiteDialect
+    database-platform: org.hibernate.dialect.PostgreSQLDialect
     hibernate:
-      ddl-auto: update
+      ddl-auto: none
     show-sql: false
 
 logging:

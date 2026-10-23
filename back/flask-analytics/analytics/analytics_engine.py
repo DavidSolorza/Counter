@@ -42,16 +42,16 @@ class AnalyticsEngine:
         """Resumen rápido para compatibilidad retroactiva."""
         with self._manager.session() as conn:
             c = conn.cursor()
-            c.execute("SELECT COUNT(*) AS total FROM telemetry_events WHERE site_key = ?;", (site_key,))
+            c.execute("SELECT COUNT(*) AS total FROM telemetry_events WHERE site_key = %s;", (site_key,))
             tot = c.fetchone()["total"]
 
-            c.execute("SELECT event_type, COUNT(*) AS count FROM telemetry_events WHERE site_key = ? GROUP BY event_type;", (site_key,))
+            c.execute("SELECT event_type, COUNT(*) AS count FROM telemetry_events WHERE site_key = %s GROUP BY event_type;", (site_key,))
             type_counts = {r["event_type"]: r["count"] for r in c.fetchall()}
 
             c.execute("""
                 SELECT json_extract(event_data, '$.element') AS element, COUNT(*) AS clicks
                 FROM telemetry_events
-                WHERE site_key = ? AND event_type IN ('click', 'rage_click')
+                WHERE site_key = %s AND event_type IN ('click', 'rage_click')
                   AND json_extract(event_data, '$.element') IS NOT NULL
                 GROUP BY element ORDER BY clicks DESC LIMIT 5;
             """, (site_key,))

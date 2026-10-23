@@ -42,7 +42,7 @@ def create_app() -> Flask:
             "service": "Counter Analytics Microservice",
             "status": "UP",
             "port": 5000,
-            "database": "analytics.db",
+            "database": "PostgreSQL (counter_db)",
             "telemetry_endpoint": "/api/v1/telemetry/collect"
         }), 200
 

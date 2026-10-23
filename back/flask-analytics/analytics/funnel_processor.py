@@ -23,7 +23,7 @@ class FunnelProcessor:
             c.execute("""
                 SELECT COUNT(DISTINCT json_extract(event_data, '$._sid')) AS count
                 FROM telemetry_events
-                WHERE site_key = ?;
+                WHERE site_key = %s;
             """, (site_key,))
             s1 = c.fetchone()["count"] or 0
 
@@ -31,13 +31,13 @@ class FunnelProcessor:
             c.execute("""
                 SELECT COUNT(DISTINCT json_extract(event_data, '$._sid')) AS count
                 FROM telemetry_events
-                WHERE site_key = ? AND (
+                WHERE site_key = %s AND (
                     event_type = 'scroll_milestone' OR
                     (event_type = 'click' AND (
-                        json_extract(event_data, '$.text') LIKE '%Películas%' OR
-                        json_extract(event_data, '$.text') LIKE '%Series%' OR
-                        json_extract(event_data, '$.text') LIKE '%Todas%' OR
-                        json_extract(event_data, '$.element') LIKE '%catalog%'
+                        json_extract(event_data, '$.text') LIKE '%%Películas%%' OR
+                        json_extract(event_data, '$.text') LIKE '%%Series%%' OR
+                        json_extract(event_data, '$.text') LIKE '%%Todas%%' OR
+                        json_extract(event_data, '$.element') LIKE '%%catalog%%'
                     ))
                 );
             """, (site_key,))
@@ -47,11 +47,11 @@ class FunnelProcessor:
             c.execute("""
                 SELECT COUNT(DISTINCT json_extract(event_data, '$._sid')) AS count
                 FROM telemetry_events
-                WHERE site_key = ? AND (
-                    json_extract(event_data, '$.text') LIKE '%Añadido%' OR
-                    json_extract(event_data, '$.text') LIKE '%Comprar%' OR
-                    json_extract(event_data, '$.text') LIKE '%Agregar%' OR
-                    json_extract(event_data, '$.element') LIKE '%btn-cart%'
+                WHERE site_key = %s AND (
+                    json_extract(event_data, '$.text') LIKE '%%Añadido%%' OR
+                    json_extract(event_data, '$.text') LIKE '%%Comprar%%' OR
+                    json_extract(event_data, '$.text') LIKE '%%Agregar%%' OR
+                    json_extract(event_data, '$.element') LIKE '%%btn-cart%%'
                 );
             """, (site_key,))
             s3 = c.fetchone()["count"] or 0
@@ -60,10 +60,10 @@ class FunnelProcessor:
             c.execute("""
                 SELECT COUNT(DISTINCT json_extract(event_data, '$._sid')) AS count
                 FROM telemetry_events
-                WHERE site_key = ? AND (
-                    json_extract(event_data, '$.text') LIKE '%Soporte%' OR
-                    json_extract(event_data, '$.text') LIKE '%WhatsApp%' OR
-                    json_extract(event_data, '$.element') LIKE '%whatsapp%'
+                WHERE site_key = %s AND (
+                    json_extract(event_data, '$.text') LIKE '%%Soporte%%' OR
+                    json_extract(event_data, '$.text') LIKE '%%WhatsApp%%' OR
+                    json_extract(event_data, '$.element') LIKE '%%whatsapp%%'
                 );
             """, (site_key,))
             s4 = c.fetchone()["count"] or 0

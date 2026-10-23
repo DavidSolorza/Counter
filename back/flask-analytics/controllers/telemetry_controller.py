@@ -40,7 +40,7 @@ def health_check() -> tuple[Response, int]:
         "status": "UP",
         "service": "Counter Analytics Microservice",
         "port": 5000,
-        "database": "analytics.db"
+        "database": "PostgreSQL (counter_db)"
     }), 200
 
 
