@@ -18,7 +18,10 @@ class AnalyticsDatabaseManager:
         self._db_path = db_path
 
     def get_connection(self) -> sqlite3.Connection:
-        conn = sqlite3.connect(self._db_path)
+        # Modo WAL y timeout para soportar alta concurrencia sin bloqueos
+        conn = sqlite3.connect(self._db_path, timeout=30.0)
+        conn.execute("PRAGMA journal_mode = WAL;")
+        conn.execute("PRAGMA synchronous = NORMAL;")
         conn.row_factory = sqlite3.Row
         return conn
 
