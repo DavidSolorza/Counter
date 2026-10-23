@@ -55,9 +55,7 @@ public class AdminUsersController {
     @PostMapping("/{siteKey}/toggle")
     public ResponseEntity<Map<String, Object>> toggleStatus(@PathVariable("siteKey") String siteKey) {
         Optional<ClientLicense> opt = licenseRepository.findBySiteKey(siteKey);
-        if (opt.isEmpty()) {
-            return ResponseEntity.notFound().build();
-        }
+        if (opt.isEmpty()) return ResponseEntity.notFound().build();
         ClientLicense lic = opt.get();
         int nextActive = (lic.getIsActive() != null && lic.getIsActive() == 1) ? 0 : 1;
         lic.setIsActive(nextActive);
@@ -71,14 +69,27 @@ public class AdminUsersController {
         return ResponseEntity.ok(resp);
     }
 
+    @PostMapping("/{siteKey}/role")
+    public ResponseEntity<Map<String, Object>> updateRole(
+            @PathVariable("siteKey") String siteKey,
+            @RequestBody(required = false) Map<String, String> payload) {
+        Optional<ClientLicense> opt = licenseRepository.findBySiteKey(siteKey);
+        if (opt.isEmpty()) return ResponseEntity.notFound().build();
+        String newRole = payload != null ? payload.getOrDefault("role", "user") : "user";
+
+        Map<String, Object> resp = new HashMap<>();
+        resp.put("success", true);
+        resp.put("siteKey", siteKey);
+        resp.put("role", newRole);
+        return ResponseEntity.ok(resp);
+    }
+
     @PostMapping("/{siteKey}/cancel")
     public ResponseEntity<Map<String, Object>> cancelUser(@PathVariable("siteKey") String siteKey) {
         Optional<ClientLicense> opt = licenseRepository.findBySiteKey(siteKey);
-        if (opt.isEmpty()) {
-            return ResponseEntity.notFound().build();
-        }
+        if (opt.isEmpty()) return ResponseEntity.notFound().build();
         ClientLicense lic = opt.get();
-        lic.setIsActive(2); // 2 = cancelado
+        lic.setIsActive(2);
         licenseRepository.save(lic);
 
         Map<String, Object> resp = new HashMap<>();
@@ -91,9 +102,7 @@ public class AdminUsersController {
     @PostMapping("/{siteKey}/activate")
     public ResponseEntity<Map<String, Object>> activateUser(@PathVariable("siteKey") String siteKey) {
         Optional<ClientLicense> opt = licenseRepository.findBySiteKey(siteKey);
-        if (opt.isEmpty()) {
-            return ResponseEntity.notFound().build();
-        }
+        if (opt.isEmpty()) return ResponseEntity.notFound().build();
         ClientLicense lic = opt.get();
         lic.setIsActive(1);
         licenseRepository.save(lic);
