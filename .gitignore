@@ -29,6 +29,11 @@ lib64/
 *.egg-info/
 *.egg
 
+# Variables de entorno y secretos
+.env
+.env.*
+!.env.example
+
 # Persistencia Local SQLite
 *.db
 *.sqlite

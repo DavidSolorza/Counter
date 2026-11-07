@@ -46,6 +46,8 @@ public class AdminUsersController {
             u.put("lastActive", lic.getCreatedAt() != null ? lic.getCreatedAt().toString().replace("T", " ") : "Reciente");
             u.put("siteKey", lic.getSiteKey());
             u.put("allowedDomain", lic.getAllowedDomain());
+            u.put("tier", lic.getTier() != null ? lic.getTier() : "ENTERPRISE");
+            u.put("monthlyQuota", lic.getMonthlyQuota() != null ? lic.getMonthlyQuota() : 100000);
             result.add(u);
         }
 

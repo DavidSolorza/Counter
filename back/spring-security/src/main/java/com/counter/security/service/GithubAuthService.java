@@ -2,6 +2,7 @@ package com.counter.security.service;
 
 import com.counter.security.domain.ClientLicense;
 import com.counter.security.repository.LicenseRepository;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 import java.net.URI;
@@ -13,6 +14,12 @@ import java.util.*;
 
 @Service
 public class GithubAuthService {
+    @Value("${oauth.github.client-id:}")
+    private String clientId;
+
+    @Value("${oauth.github.client-secret:}")
+    private String clientSecret;
+
     private final LicenseRepository licenseRepository;
     private final SecurityService securityService;
     private final HttpClient httpClient;
@@ -28,12 +35,13 @@ public class GithubAuthService {
         String username = payload.get("username");
         String email = payload.get("email");
         String avatarUrl = payload.get("avatar_url");
-        String role = payload.getOrDefault("role", "admin");
 
+        String fullName = payload.get("name");
         if ((username == null || username.trim().isEmpty() || "DavidSolorza".equals(username)) && code != null && !code.trim().isEmpty()) {
             Map<String, String> ghUser = fetchGithubProfile(code.trim());
-            if (ghUser.containsKey("username")) {
+            if (ghUser.containsKey("username") && ghUser.get("username") != null) {
                 username = ghUser.get("username");
+                fullName = ghUser.get("name");
                 email = ghUser.get("email");
                 avatarUrl = ghUser.get("avatar_url");
             }
@@ -43,7 +51,11 @@ public class GithubAuthService {
         if (avatarUrl == null || avatarUrl.trim().isEmpty()) avatarUrl = "https://github.com/" + username + ".png";
         if (email == null || email.trim().isEmpty()) email = username.toLowerCase() + "@github.local";
 
-        ClientLicense license = resolveLicenseForUser(username);
+        String normIdentity = securityService.normalizeIdentity(username);
+        boolean isAdmin = normIdentity.contains("davidsolorza") || "admin".equals(normIdentity);
+        String role = isAdmin ? "admin" : "client";
+
+        ClientLicense license = securityService.resolveUnifiedLicense(username, fullName, email);
         String sessionToken = "cntr_sess_" + UUID.randomUUID().toString().replace("-", "");
 
         Map<String, Object> resp = new HashMap<>();
@@ -67,16 +79,6 @@ public class GithubAuthService {
         return resp;
     }
 
-    private ClientLicense resolveLicenseForUser(String username) {
-        Optional<ClientLicense> existing = licenseRepository.findFirstByClientNameIgnoreCase(username);
-        if (existing.isPresent()) return existing.get();
-
-        String safeName = username.toLowerCase().replaceAll("[^a-z0-9]", "");
-        String newKey = securityService.generateSiteKey("cntr_" + safeName + "_");
-        ClientLicense created = new ClientLicense(username, newKey, "*", 1);
-        return licenseRepository.save(created);
-    }
-
     private Map<String, String> fetchGithubProfile(String code) {
         Map<String, String> data = new HashMap<>();
         try {
@@ -95,6 +97,7 @@ public class GithubAuthService {
             HttpResponse<String> resp = httpClient.send(req, HttpResponse.BodyHandlers.ofString());
             if (resp.statusCode() == 200 && resp.body().contains("\"login\":")) {
                 data.put("username", extractJsonField(resp.body(), "login"));
+                data.put("name", extractJsonField(resp.body(), "name"));
                 data.put("avatar_url", extractJsonField(resp.body(), "avatar_url"));
                 data.put("email", extractJsonField(resp.body(), "email"));
             }
@@ -103,9 +106,10 @@ public class GithubAuthService {
     }
 
     private String exchangeOAuthCode(String code) {
+        if (clientId == null || clientId.isEmpty() || clientSecret == null || clientSecret.isEmpty()) return null;
         try {
             String json = String.format("{\"client_id\":\"%s\",\"client_secret\":\"%s\",\"code\":\"%s\"}",
-                    "Ov23liCRgpOkJdEvTFzO", "7b26c3e8d4f6162b8c3905d5777be78c129febc6", code);
+                    clientId, clientSecret, code);
             HttpRequest req = HttpRequest.newBuilder()
                     .uri(URI.create("https://github.com/login/oauth/access_token"))
                     .header("Content-Type", "application/json")

@@ -2,6 +2,7 @@ package com.counter.security.service;
 
 import com.counter.security.domain.ClientLicense;
 import com.counter.security.repository.LicenseRepository;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 import java.net.URI;
@@ -15,8 +16,11 @@ import java.util.*;
 
 @Service
 public class GoogleAuthService {
-    private static final String CLIENT_ID = "603064918591-hf2mn7pi3j86mq48j1h7frtha1ujii2r.apps.googleusercontent.com";
-    private static final String CLIENT_SECRET = "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";
+    @Value("${oauth.google.client-id:}")
+    private String clientId;
+
+    @Value("${oauth.google.client-secret:}")
+    private String clientSecret;
 
     private final LicenseRepository licenseRepository;
     private final SecurityService securityService;
@@ -33,12 +37,11 @@ public class GoogleAuthService {
         String username = payload.get("username");
         String email = payload.get("email");
         String avatarUrl = payload.get("avatar_url");
-        String role = payload.getOrDefault("role", "admin");
         String redirectUri = payload.getOrDefault("redirect_uri", "http://localhost:5174");
 
         if (code != null && !code.trim().isEmpty()) {
             Map<String, String> profile = fetchGoogleProfile(code.trim(), redirectUri);
-            if (profile.containsKey("email")) {
+            if (profile.containsKey("email") && profile.get("email") != null) {
                 email = profile.get("email");
                 username = profile.getOrDefault("name", email.split("@")[0]);
                 avatarUrl = profile.get("picture");
@@ -51,7 +54,12 @@ public class GoogleAuthService {
             avatarUrl = "https://api.dicebear.com/7.x/initials/svg?seed=" + URLEncoder.encode(username, StandardCharsets.UTF_8);
         }
 
-        ClientLicense license = resolveLicenseForUser(username);
+        String normIdentity = securityService.normalizeIdentity(username);
+        boolean isAdmin = normIdentity.contains("davidsolorza") || "admin".equals(normIdentity)
+                || "davidsolorza@gmail.com".equalsIgnoreCase(email);
+        String role = isAdmin ? "admin" : "client";
+
+        ClientLicense license = securityService.resolveUnifiedLicense(username, null, email);
         String sessionToken = "cntr_googlesess_" + UUID.randomUUID().toString().replace("-", "");
 
         Map<String, Object> resp = new HashMap<>();
@@ -73,16 +81,6 @@ public class GoogleAuthService {
         lic.put("is_active", license.getIsActive());
         resp.put("license", lic);
         return resp;
-    }
-
-    private ClientLicense resolveLicenseForUser(String username) {
-        Optional<ClientLicense> existing = licenseRepository.findFirstByClientNameIgnoreCase(username);
-        if (existing.isPresent()) return existing.get();
-
-        String safeName = username.toLowerCase().replaceAll("[^a-z0-9]", "");
-        String newKey = securityService.generateSiteKey("cntr_google_" + safeName + "_");
-        ClientLicense created = new ClientLicense(username, newKey, "*", 1);
-        return licenseRepository.save(created);
     }
 
     private Map<String, String> fetchGoogleProfile(String code, String redirectUri) {
@@ -107,10 +105,11 @@ public class GoogleAuthService {
     }
 
     private String exchangeOAuthCode(String code, String redirectUri) {
+        if (clientId == null || clientId.isEmpty() || clientSecret == null || clientSecret.isEmpty()) return null;
         try {
             String form = "code=" + URLEncoder.encode(code, StandardCharsets.UTF_8)
-                    + "&client_id=" + URLEncoder.encode(CLIENT_ID, StandardCharsets.UTF_8)
-                    + "&client_secret=" + URLEncoder.encode(CLIENT_SECRET, StandardCharsets.UTF_8)
+                    + "&client_id=" + URLEncoder.encode(clientId, StandardCharsets.UTF_8)
+                    + "&client_secret=" + URLEncoder.encode(clientSecret, StandardCharsets.UTF_8)
                     + "&redirect_uri=" + URLEncoder.encode(redirectUri, StandardCharsets.UTF_8)
                     + "&grant_type=authorization_code";
 

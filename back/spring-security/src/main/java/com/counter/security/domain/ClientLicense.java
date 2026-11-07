@@ -21,14 +21,26 @@ public class ClientLicense {
     @Column(name = "site_key", nullable = false, unique = true)
     private String siteKey;
 
+    @Column(name = "secret_token")
+    private String secretToken;
+
     @Column(name = "allowed_domain", nullable = false)
     private String allowedDomain;
+
+    @Column(name = "monthly_quota", nullable = false)
+    private Integer monthlyQuota = 100000;
 
     @Column(name = "is_active", nullable = false)
     private Integer isActive = 1;
 
+    @Column(name = "tier", nullable = false)
+    private String tier = "ENTERPRISE";
+
     @Column(name = "created_at", insertable = false, updatable = false)
     private LocalDateTime createdAt;
+
+    @Column(name = "updated_at", insertable = false, updatable = false)
+    private LocalDateTime updatedAt;
 
     public ClientLicense() {}
 
@@ -48,13 +60,23 @@ public class ClientLicense {
     public String getSiteKey() { return siteKey; }
     public void setSiteKey(String siteKey) { this.siteKey = siteKey; }
 
+    public String getSecretToken() { return secretToken; }
+    public void setSecretToken(String secretToken) { this.secretToken = secretToken; }
+
     public String getAllowedDomain() { return allowedDomain; }
     public void setAllowedDomain(String allowedDomain) { this.allowedDomain = allowedDomain; }
+
+    public Integer getMonthlyQuota() { return monthlyQuota; }
+    public void setMonthlyQuota(Integer monthlyQuota) { this.monthlyQuota = monthlyQuota; }
 
     public Integer getIsActive() { return isActive; }
     public void setIsActive(Integer isActive) { this.isActive = isActive; }
 
+    public String getTier() { return tier; }
+    public void setTier(String tier) { this.tier = tier; }
+
     public boolean isLicenseActive() { return this.isActive != null && this.isActive == 1; }
 
     public LocalDateTime getCreatedAt() { return createdAt; }
+    public LocalDateTime getUpdatedAt() { return updatedAt; }
 }
